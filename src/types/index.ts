@@ -27,7 +27,7 @@ export interface LoginAttempt {
   userAgent: string;
   timestamp: Date;
   success: boolean;
-  location?: GeoLocation;
+  location?: GeoLocation | undefined;
 }
 
 export interface GeoLocation {
