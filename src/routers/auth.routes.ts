@@ -1,0 +1,251 @@
+import { Router } from 'express';
+import passport from 'passport';
+import { AuthController } from '../controllers/auth.controller';
+import { AuthMiddleware } from '../middleware/auth.middleware';
+import { ValidationMiddleware } from '../middleware/validation.middleware';
+import { UserRepository, toPublicUser } from '../models'
+
+const router = Router();
+const authController = new AuthController();
+
+// ============================================
+// Public Routes
+// ============================================
+
+/**
+ * @route POST /api/v1/auth/register
+ * @desc Register a new user
+ * @access Public
+ */
+router.post(
+  '/register',
+  ValidationMiddleware.validate(ValidationMiddleware.registerRules),
+  authController.register
+);
+
+/**
+ * @route POST /api/v1/auth/login
+ * @desc Login user
+ * @access Public
+ */
+router.post(
+  '/login',
+  ValidationMiddleware.validate(ValidationMiddleware.loginRules),
+  authController.login
+);
+
+/**
+ * @route POST /api/v1/auth/refresh-token
+ * @desc Refresh access token
+ * @access Public
+ */
+router.post(
+  '/refresh-token',
+  ValidationMiddleware.validate(ValidationMiddleware.refreshTokenRules),
+  authController.refreshToken
+);
+
+/**
+ * @route POST /api/v1/auth/forgot-password
+ * @desc Request password reset
+ * @access Public
+ */
+router.post(
+  '/forgot-password',
+  ValidationMiddleware.validate(ValidationMiddleware.forgotPasswordRules),
+  authController.forgotPassword
+);
+
+/**
+ * @route POST /api/v1/auth/reset-password
+ * @desc Reset password with token
+ * @access Public
+ */
+router.post(
+  '/reset-password',
+  ValidationMiddleware.validate(ValidationMiddleware.resetPasswordRules),
+  authController.resetPassword
+);
+
+// ============================================
+// Google OAuth Routes
+// ============================================
+
+/**
+ * @route GET /api/v1/auth/google
+ * @desc Initiate Google OAuth
+ * @access Public
+ */
+router.get('/google', (req, res, next) => {
+  const { phoneNumber } = req.query;
+  if (!phoneNumber || typeof phoneNumber !== 'string') {
+    return res.status(400).json({ status: 'error', message: 'Phone number is required' });
+  }
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+    state: Buffer.from(JSON.stringify({ phoneNumber })).toString('base64'),
+  } as any)(req, res, next);
+});
+
+/**
+ * @route GET /api/v1/auth/google/callback
+ * @desc Google OAuth callback
+ * @access Public
+ */
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/login'
+  }),
+  authController.googleCallback
+);
+
+// ============================================
+// Protected Routes (Require Authentication)
+// ============================================
+
+/**
+ * @route POST /api/v1/auth/logout
+ * @desc Logout user
+ * @access Private
+ */
+router.post(
+  '/logout',
+  AuthMiddleware.authenticate,
+  authController.logout
+);
+
+/**
+ * @route GET /api/v1/auth/profile
+ * @desc Get current user profile
+ * @access Private
+ */
+router.get(
+  '/profile',
+  AuthMiddleware.authenticate,
+  authController.getProfile
+);
+
+/**
+ * @route PUT /api/v1/auth/change-password
+ * @desc Change password
+ * @access Private
+ */
+router.put(
+  '/change-password',
+  AuthMiddleware.authenticate,
+  ValidationMiddleware.validate(ValidationMiddleware.changePasswordRules),
+  authController.changePassword
+);
+
+/**
+ * @route POST /api/v1/auth/verify-email
+ * @desc Verify email address
+ * @access Private
+ */
+router.post(
+  '/verify-email',
+  AuthMiddleware.authenticate,
+  (req, res) => {
+    res.json({ message: 'Email verification endpoint' });
+  }
+);
+
+/**
+ * @route POST /api/v1/auth/enable-mfa
+ * @desc Enable multi-factor authentication
+ * @access Private
+ */
+router.post(
+  '/enable-mfa',
+  AuthMiddleware.authenticate,
+  ValidationMiddleware.validate(ValidationMiddleware.enableMfaRules),
+  (req, res) => {
+    res.json({ message: 'MFA setup endpoint' });
+  }
+);
+
+/**
+ * @route POST /api/v1/auth/disable-mfa
+ * @desc Disable multi-factor authentication
+ * @access Private
+ */
+router.post(
+  '/disable-mfa',
+  AuthMiddleware.authenticate,
+  (req, res) => {
+    res.json({ message: 'MFA disable endpoint' });
+  }
+);
+
+// ============================================
+// Admin Routes (Require Admin Role)
+// ============================================
+
+/**
+ * @route GET /api/v1/auth/users
+ * @desc Get all users (admin only)
+ * @access Private/Admin
+ */
+router.get(
+  '/users',
+  AuthMiddleware.authenticate,
+  AuthMiddleware.isAdmin,
+  async (req, res) => {
+    try {
+      const users = (await UserRepository.findAll()).map(toPublicUser);
+      res.json({
+        status: 'success',
+        data: { users }
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch users'
+      });
+    }
+  }
+);
+
+/**
+ * @route PUT /api/v1/auth/users/:userId/status
+ * @desc Update user status (admin only)
+ * @access Private/Admin
+ */
+// router.put(
+//   '/users/:userId/status',
+//   AuthMiddleware.authenticate,
+//   AuthMiddleware.isAdmin,
+//   async (req, res) => {
+//     try {
+//       const { userId } = req.params;
+//       const { status } = req.body;
+
+//       const user = await User.findByPk(userId);
+//       if (!user) {
+//         return res.status(404).json({
+//           status: 'error',
+//           message: 'User not found'
+//         });
+//       }
+
+//       user.status = status;
+//       await user.save();
+
+//       res.json({
+//         status: 'success',
+//         message: 'User status updated successfully',
+//         data: { user: user.toJSON() }
+//       });
+//     } catch (error) {
+//       res.status(500).json({
+//         status: 'error',
+//         message: 'Failed to update user status'
+//       });
+//     }
+//   }
+// );
+
+export default router;
