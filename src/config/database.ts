@@ -1,54 +1,40 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv'
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
-interface DBConfig {
-  database: string;
-  username: string;
-  password: string;
-  host: string;
-  port: number;
-  dialect: 'postgres'
-}
-
-const dbConfig: DBConfig = {
-  database: process.env.DB_NAME || 'the_bank',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
+const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  dialect: 'postgres'
-};
-
-export const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  {
-    host: dbConfig.host,
-    port: dbConfig.port,
-    dialect: dbConfig.dialect,
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    define: {
-      timestamps: true,
-      underscored: true
-    },
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'the_bank',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  timezone: 'Z',
+  typeCast: (field, next) => {
+    if (field.type === 'JSON') {
+      const val = field.string();
+      return val ? JSON.parse(val) : null;
     }
+    if (field.type === 'TINY' && field.length === 1) {
+      return field.string() === '1';
+    }
+    return next();
   }
-);
+});
 
 export const testConnection = async (): Promise<void> => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL connection established successfully.');
+    const conn = await pool.getConnection();
+    await conn.ping();
+    conn.release();
+    console.log('MySQL connection pool established successfully.');
   } catch (error) {
-    console.error('❌ Unable to connect to the PostgreSQL:', error);
-    process.exit(1)
+    console.error('Unable to connect to MySQL:', error);
+    process.exit(1);
   }
 };
+
+export default pool;
