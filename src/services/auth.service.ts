@@ -12,6 +12,7 @@ import type { User } from "../models";
 import {
   TokenPayload,
   UserRole,
+  AccountStatus,
   GeoLocation,
   LoginAttempt,
   FraudRiskLevel,
@@ -133,6 +134,7 @@ export class AuthService {
       if (newAttempts >= maxAttempts) {
         const lockUntil = new Date(Date.now() + lockTime * 60 * 1000);
         updates.lockUntil = lockUntil;
+        updates.status = AccountStatus.LOCKED;
 
         await FraudAlertRepository.create({
           userId: user.id,
