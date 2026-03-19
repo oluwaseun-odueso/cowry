@@ -3,7 +3,7 @@ import path from 'path';
 import pool from '../config/database';
 
 export type { User, CreateUserInput, PublicUser } from './user';
-export { UserRepository, comparePassword, isLocked, incrementLoginAttempts, resetLoginAttempts, toPublicUser } from './user';
+export { UserRepository, comparePassword, isLocked, resetLoginAttempts, toPublicUser } from './user';
 
 export type { Session, CreateSessionInput } from './session';
 export { SessionRepository } from './session';

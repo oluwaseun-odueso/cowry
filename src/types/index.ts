@@ -1,18 +1,18 @@
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin'
+  USER = "user",
+  ADMIN = "admin",
 }
 
 export enum AccountStatus {
-  ACTIVE = 'active',
-  SUSPENDED = 'suspended',
-  LOCKED = 'locked'
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+  LOCKED = "locked",
 }
 
 export enum FraudRiskLevel {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high'
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
 }
 
 export interface TokenPayload {
@@ -42,5 +42,5 @@ export interface FraudDetectionRule {
   name: string;
   description: string;
   severity: FraudRiskLevel;
-  action: 'log' | 'alert' | 'block';
+  action: "log" | "alert" | "block";
 }
