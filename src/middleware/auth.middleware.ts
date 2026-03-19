@@ -189,10 +189,12 @@ export class AuthMiddleware {
    * Extract client info (IP, user agent) from request
    */
   static extractClientInfo = (req: Request) => {
+    const raw = req.ip || req.socket.remoteAddress || 'unknown';
+    // Normalise IPv6-mapped IPv4 (::ffff:1.2.3.4 → 1.2.3.4)
+    const ipAddress = raw.startsWith('::ffff:') ? raw.slice(7) : raw;
     return {
-      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+      ipAddress,
       userAgent: req.headers['user-agent'] || 'unknown',
-      location: (req as any).location // Will be set by geolocation middleware if used
     };
   };
 }
