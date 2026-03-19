@@ -4,6 +4,7 @@ import { AuthMiddleware } from '../middleware/auth.middleware';
 import { UserRepository, toPublicUser } from '../models';
 // import { FraudDetectionService } from '../services/fraud.service';
 import { GeoLocation } from '../types';
+import geoip from 'geoip-lite';
 
 export class AuthController {
   private authService: AuthService;
@@ -25,7 +26,7 @@ export class AuthController {
       console.log("User Agent: ", userAgent)
       
       // Get location from IP (you can implement this using a geolocation service)
-      const location = await this.getLocationFromIp(ipAddress);
+      const location = this.getLocationFromIp(ipAddress);
       console.log("Location: ", location)
 
       const result = await this.authService.register({
@@ -60,7 +61,7 @@ export class AuthController {
       const { email, password } = req.body;
       const { ipAddress, userAgent } = AuthMiddleware.extractClientInfo(req);
       
-      const location = await this.getLocationFromIp(ipAddress);
+      const location = this.getLocationFromIp(ipAddress);
 
       const result = await this.authService.login({
         email,
@@ -110,7 +111,7 @@ export class AuthController {
         return res.redirect(`${frontendUrl}/login?error=phone_required`);
       }
 
-      const location = await this.getLocationFromIp(ipAddress);
+      const location = this.getLocationFromIp(ipAddress);
       const result = await this.authService.googleLogin(profile, ipAddress, userAgent, phoneNumber, location);
 
       this.setRefreshTokenCookie(res, result.refreshToken);
@@ -298,22 +299,15 @@ export class AuthController {
     });
   }
 
-  /**
-   * Helper: Get location from IP address
-   * This is a placeholder - implement using a geolocation service
-   */
-  private async getLocationFromIp(ipAddress: string): Promise<GeoLocation | undefined> {
-    // In production, use a service like maxmind-geolite2 or ipapi.co
-    // For now, return undefined or mock data for development
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        country: 'UK',
-        region: 'Staffordshire',
-        city: 'Stoke-on-Trent',
-        latitude: 53.0027,
-        longitude: -2.1794
-      };
-    }
-    return undefined;
+  private getLocationFromIp(ipAddress: string): GeoLocation | undefined {
+    const geo = geoip.lookup(ipAddress);
+    if (!geo) return undefined;
+    return {
+      country: geo.country,
+      region: geo.region,
+      city: geo.city,
+      latitude: geo.ll[0],
+      longitude: geo.ll[1],
+    };
   }
 }
