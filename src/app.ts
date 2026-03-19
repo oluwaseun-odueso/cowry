@@ -17,6 +17,10 @@ dotenv.config()
 const app: Application = express()
 const PORT = process.env.PORT || 3000
 
+// Trust the first proxy hop (Nginx / load balancer) so req.ip returns the real client IP.
+// Set TRUST_PROXY=1 in production (or a specific IP/CIDR for tighter control).
+app.set('trust proxy', process.env.TRUST_PROXY ?? (process.env.NODE_ENV === 'production' ? 1 : false))
+
 app.use(helmet({
     contentSecurityPolicy: {
     directives: {
