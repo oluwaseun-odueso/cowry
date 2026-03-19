@@ -236,21 +236,6 @@ export function isLocked(user: User): boolean {
   return !!(user.lockUntil && user.lockUntil > new Date());
 }
 
-export async function incrementLoginAttempts(user: User): Promise<User> {
-  const MAX_ATTEMPTS = 5;
-  const LOCK_TIME_MINUTES = 30;
-
-  const newAttempts = user.loginAttempts + 1;
-  const updates: Partial<User> = { loginAttempts: newAttempts };
-
-  if (newAttempts >= MAX_ATTEMPTS) {
-    updates.lockUntil = new Date(Date.now() + LOCK_TIME_MINUTES * 60 * 1000);
-    updates.status = AccountStatus.LOCKED;
-  }
-
-  await UserRepository.update(user.id, updates);
-  return { ...user, ...updates };
-}
 
 export async function resetLoginAttempts(user: User): Promise<User> {
   await pool.execute(
