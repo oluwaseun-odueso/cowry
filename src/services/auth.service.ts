@@ -174,8 +174,15 @@ export class AuthService {
       throw new Error("Your account is not active. Please contact support.");
     }
 
-    // Successful login - reset attempts and update last login
+    // Successful password check — reset lockout counters
     user = await resetLoginAttempts(user);
+
+    // If MFA is enabled, issue a short-lived challenge token instead of full tokens
+    if (user.isMfaEnabled) {
+      const challengeToken = this.issueMfaChallengeToken(user.id, user.email, user.role);
+      return { mfaRequired: true, challengeToken } as any;
+    }
+
     await UserRepository.update(user.id, {
       lastLogin: new Date(),
       lastLoginIp: credentials.ipAddress,
