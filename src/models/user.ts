@@ -191,6 +191,10 @@ export class UserRepository {
     return result.affectedRows > 0;
   }
 
+  static async clearMfaSecret(id: string): Promise<void> {
+    await pool.execute("UPDATE users SET mfa_secret = NULL WHERE id = ?", [id]);
+  }
+
   static async save(user: User): Promise<boolean> {
     const [result] = await pool.execute<ResultSetHeader>(
       `UPDATE users SET

@@ -422,7 +422,8 @@ export class AuthService {
       if (!backupValid) throw new Error("Invalid code. MFA not disabled.");
     }
 
-    await UserRepository.update(userId, { isMfaEnabled: false, mfaSecret: undefined });
+    await UserRepository.update(userId, { isMfaEnabled: false });
+    await UserRepository.clearMfaSecret(userId);
     await MfaBackupCodeRepository.deleteByUserId(userId);
 
     await FraudAlertRepository.create({
