@@ -403,6 +403,15 @@ export class AuthService {
   }
 
   /**
+   * Issue a short-lived MFA challenge token after password verification.
+   * The client exchanges this for full tokens via verifyMfaChallenge().
+   */
+  issueMfaChallengeToken(userId: string, email: string, role: UserRole): string {
+    const payload: TokenPayload = { userId, email, role, type: "mfa_challenge" };
+    return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: 5 * 60 });
+  }
+
+  /**
    * Verify MFA challenge token + TOTP/backup code, then issue full session tokens.
    */
   async verifyMfaChallenge(
