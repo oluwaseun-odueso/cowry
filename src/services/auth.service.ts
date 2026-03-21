@@ -403,6 +403,75 @@ export class AuthService {
   }
 
   /**
+   * Verify MFA challenge token + TOTP/backup code, then issue full session tokens.
+   */
+  async verifyMfaChallenge(
+    challengeToken: string,
+    code: string,
+    ipAddress: string,
+    userAgent: string,
+    location?: GeoLocation,
+  ) {
+    let decoded: TokenPayload;
+    try {
+      decoded = jwt.verify(challengeToken, process.env.JWT_SECRET!) as TokenPayload;
+    } catch {
+      throw new Error("Invalid or expired MFA challenge token");
+    }
+
+    if (decoded.type !== "mfa_challenge") throw new Error("Invalid token type");
+
+    const user = await UserRepository.findById(decoded.userId);
+    if (!user || user.status !== "active") throw new Error("User not found or inactive");
+
+    const totpValid = speakeasy.totp.verify({
+      secret: user.mfaSecret!,
+      encoding: "base32",
+      token: code,
+      window: 1,
+    });
+
+    if (!totpValid) {
+      const backupValid = await MfaBackupCodeRepository.verifyAndConsume(decoded.userId, code);
+      if (!backupValid) {
+        await this.logFailedAttempt({
+          email: user.email,
+          ipAddress,
+          userAgent,
+          timestamp: new Date(),
+          success: false,
+          location,
+        });
+        throw new Error("Invalid MFA code");
+      }
+    }
+
+    await UserRepository.update(user.id, { lastLogin: new Date(), lastLoginIp: ipAddress });
+
+    await FraudAlertRepository.create({
+      userId: user.id,
+      ruleName: "SUCCESSFUL_LOGIN",
+      riskLevel: FraudRiskLevel.LOW,
+      description: `Successful MFA-verified login from ${ipAddress}`,
+      ipAddress,
+      location,
+      metadata: { userAgent, timestamp: new Date() },
+      action: "log",
+    });
+
+    const sessionData: { ipAddress: string; userAgent: string; location?: GeoLocation | null } = {
+      ipAddress,
+      userAgent,
+    };
+    if (location) sessionData.location = location;
+
+    return {
+      user: toPublicUser(user),
+      ...(await this.generateTokens(user, sessionData)),
+    };
+  }
+
+  /**
    * Generate access and refresh tokens
    */
   private async generateTokens(
