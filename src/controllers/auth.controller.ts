@@ -288,6 +288,22 @@ export class AuthController {
   };
 
   /**
+   * Initiate MFA setup — generates TOTP secret and returns QR code URI
+   */
+  setupMfa = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const result = await this.authService.setupMfa(req.user!.id);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Scan the QR code with your authenticator app, then call /enable-mfa with the 6-digit code to activate.',
+        data: result
+      });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Helper: Set refresh token cookie
    */
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
