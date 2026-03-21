@@ -403,6 +403,39 @@ export class AuthService {
   }
 
   /**
+   * Disable MFA after verifying the current TOTP code or a backup code.
+   */
+  async disableMfa(userId: string, code: string): Promise<void> {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+    if (!user.isMfaEnabled) throw new Error("MFA is not enabled.");
+
+    const totpValid = speakeasy.totp.verify({
+      secret: user.mfaSecret!,
+      encoding: "base32",
+      token: code,
+      window: 1,
+    });
+
+    if (!totpValid) {
+      const backupValid = await MfaBackupCodeRepository.verifyAndConsume(userId, code);
+      if (!backupValid) throw new Error("Invalid code. MFA not disabled.");
+    }
+
+    await UserRepository.update(userId, { isMfaEnabled: false, mfaSecret: undefined });
+    await MfaBackupCodeRepository.deleteByUserId(userId);
+
+    await FraudAlertRepository.create({
+      userId,
+      ruleName: "MFA_DISABLED",
+      riskLevel: FraudRiskLevel.MEDIUM,
+      description: "User disabled multi-factor authentication",
+      ipAddress: "system",
+      action: "log",
+    });
+  }
+
+  /**
    * Issue a short-lived MFA challenge token after password verification.
    * The client exchanges this for full tokens via verifyMfaChallenge().
    */
