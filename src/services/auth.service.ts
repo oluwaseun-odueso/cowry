@@ -1,8 +1,11 @@
 import jwt, { SignOptions } from "jsonwebtoken";
+import speakeasy from "speakeasy";
+import { randomBytes } from "crypto";
 import {
   UserRepository,
   SessionRepository,
   FraudAlertRepository,
+  MfaBackupCodeRepository,
   comparePassword,
   isLocked,
   resetLoginAttempts,
@@ -17,7 +20,6 @@ import {
   LoginAttempt,
   FraudRiskLevel,
 } from "../types";
-import { randomBytes } from "crypto";
 
 export class AuthService {
   /**
@@ -336,6 +338,68 @@ export class AuthService {
    */
   async logoutAll(userId: string) {
     await SessionRepository.invalidateByUserId(userId);
+  }
+
+  // ─── MFA ──────────────────────────────────────────────────────────────────
+
+  /**
+   * Step 1 of MFA setup: generate TOTP secret and return QR code URI.
+   * The secret is stored on the user but isMfaEnabled stays false until
+   * the user confirms with a valid code via enableMfa().
+   */
+  async setupMfa(userId: string): Promise<{ otpauthUrl: string; secret: string }> {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const secretObj = speakeasy.generateSecret({
+      name: `Cowry (${user.email})`,
+      issuer: "Cowry Bank",
+      length: 20,
+    });
+
+    await UserRepository.update(userId, { mfaSecret: secretObj.base32 });
+
+    return {
+      otpauthUrl: secretObj.otpauth_url!,
+      secret: secretObj.base32,
+    };
+  }
+
+  /**
+   * Step 2 of MFA setup: verify the first TOTP code, persist the secret,
+   * enable MFA, and return one-time backup codes (plain-text, shown once).
+   */
+  async enableMfa(userId: string, totpCode: string): Promise<{ backupCodes: string[] }> {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+    if (!user.mfaSecret) throw new Error("MFA setup not initiated. Call /setup-mfa first.");
+    if (user.isMfaEnabled) throw new Error("MFA is already enabled.");
+
+    const valid = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: "base32",
+      token: totpCode,
+      window: 1,
+    });
+    if (!valid) throw new Error("Invalid authenticator code. Please try again.");
+
+    const plainCodes = Array.from({ length: 8 }, () =>
+      randomBytes(4).toString("hex").toUpperCase(),
+    );
+
+    await MfaBackupCodeRepository.createMany(userId, plainCodes);
+    await UserRepository.update(userId, { isMfaEnabled: true });
+
+    await FraudAlertRepository.create({
+      userId,
+      ruleName: "MFA_ENABLED",
+      riskLevel: FraudRiskLevel.LOW,
+      description: "User enabled multi-factor authentication",
+      ipAddress: "system",
+      action: "log",
+    });
+
+    return { backupCodes: plainCodes };
   }
 
   /**
