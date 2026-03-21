@@ -11,6 +11,9 @@ export { SessionRepository } from './session';
 export type { FraudAlert, CreateFraudAlertInput } from './fraudAlert';
 export { FraudAlertRepository } from './fraudAlert';
 
+export type { MfaBackupCode } from './mfaBackupCode';
+export { MfaBackupCodeRepository } from './mfaBackupCode';
+
 export const initializeDatabase = async (): Promise<void> => {
   const schemaPath = path.join(__dirname, '../config/schema.sql');
   const sql = fs.readFileSync(schemaPath, 'utf8');
