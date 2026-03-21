@@ -19,6 +19,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: UserRole;
+  type?: "access" | "mfa_challenge";
 }
 
 export interface LoginAttempt {
