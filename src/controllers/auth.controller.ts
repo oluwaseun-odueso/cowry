@@ -274,6 +274,52 @@ export class AuthController {
   };
 
   /**
+   * Get all active sessions for the authenticated user
+   */
+  getSessions = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const sessions = await this.authService.getUserSessions(req.user!.id);
+      return res.status(200).json({ status: 'success', data: { sessions } });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
+   * Revoke a specific session by ID
+   */
+  revokeSession = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      if (!sessionId) {
+        return res.status(400).json({ status: 'error', message: 'Session ID is required.' });
+      }
+      await this.authService.revokeSession(req.user!.id, sessionId);
+      return res.status(200).json({ status: 'success', message: 'Session revoked.' });
+    } catch (error: any) {
+      const status = error.message === 'Session not found' ? 404 : 500;
+      return res.status(status).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
+   * Logout from all devices — invalidates every active session for the user
+   */
+  logoutAll = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      await this.authService.logoutAll(req.user!.id);
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+      return res.status(200).json({ status: 'success', message: 'Logged out from all devices.' });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Verify email address using the plain-text token from the verification link
    */
   verifyEmail = async (req: Request, res: Response): Promise<Response> => {
