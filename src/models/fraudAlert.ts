@@ -107,6 +107,44 @@ export class FraudAlertRepository {
     return rows.map(r => mapRow(r as RowDataPacket));
   }
 
+  static async findAll(options?: {
+    riskLevel?: FraudRiskLevel;
+    isResolved?: boolean;
+    userId?: string;
+    from?: Date;
+    to?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<{ alerts: FraudAlert[]; total: number }> {
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const offset = (page - 1) * limit;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (options?.riskLevel) { conditions.push('risk_level = ?'); params.push(options.riskLevel); }
+    if (options?.isResolved !== undefined) { conditions.push('is_resolved = ?'); params.push(options.isResolved ? 1 : 0); }
+    if (options?.userId) { conditions.push('user_id = ?'); params.push(options.userId); }
+    if (options?.from) { conditions.push('created_at >= ?'); params.push(options.from); }
+    if (options?.to) { conditions.push('created_at <= ?'); params.push(options.to); }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const [countRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM fraud_alerts ${where}`,
+      params,
+    );
+    const total = (countRows[0] as RowDataPacket).total as number;
+
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT * FROM fraud_alerts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
+    );
+
+    return { alerts: rows.map(r => mapRow(r as RowDataPacket)), total };
+  }
+
   static async resolve(id: string, resolvedBy: string): Promise<boolean> {
     const [result] = await pool.execute<ResultSetHeader>(
       'UPDATE fraud_alerts SET is_resolved = 1, resolved_at = NOW(), resolved_by = ? WHERE id = ?',
