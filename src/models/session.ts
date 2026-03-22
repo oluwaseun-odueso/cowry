@@ -102,6 +102,16 @@ export class SessionRepository {
     return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
   }
 
+  /** Fetch sessions created within the last `windowMinutes` for a user (any validity). */
+  static async findRecentByUserId(userId: string, windowMinutes: number): Promise<Session[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT * FROM sessions
+       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+      [userId, windowMinutes],
+    );
+    return rows.map(r => mapRow(r as RowDataPacket));
+  }
+
   static async findActiveByUserId(userId: string): Promise<Session[]> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       'SELECT * FROM sessions WHERE user_id = ? AND is_valid = 1',
