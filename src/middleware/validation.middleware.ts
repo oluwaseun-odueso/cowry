@@ -134,13 +134,31 @@ export class ValidationMiddleware {
   ];
 
   /**
-   * Enable MFA validation rules
+   * Enable MFA — confirm setup with first TOTP code
    */
   static enableMfaRules: ValidationChain[] = [
-    body('phoneNumber')
-      .notEmpty()
-      .withMessage('Phone number is required for MFA')
-      .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,4}$/)
-      .withMessage('Please provide a valid phone number')
+    body('code')
+      .notEmpty().withMessage('Authenticator code is required')
+      .matches(/^\d{6}$/).withMessage('Code must be a 6-digit number')
+  ];
+
+  /**
+   * Verify MFA challenge during login (challengeToken + TOTP or backup code)
+   */
+  static verifyMfaRules: ValidationChain[] = [
+    body('challengeToken')
+      .notEmpty().withMessage('Challenge token is required'),
+    body('code')
+      .notEmpty().withMessage('MFA code is required')
+      .matches(/^(\d{6}|[A-F0-9]{8})$/).withMessage('Code must be a 6-digit TOTP or 8-character backup code')
+  ];
+
+  /**
+   * Disable MFA — requires current TOTP or a backup code
+   */
+  static disableMfaRules: ValidationChain[] = [
+    body('code')
+      .notEmpty().withMessage('Code is required')
+      .matches(/^(\d{6}|[A-F0-9]{8})$/).withMessage('Code must be a 6-digit TOTP or 8-character backup code')
   ];
 }

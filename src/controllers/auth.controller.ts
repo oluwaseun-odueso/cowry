@@ -216,7 +216,7 @@ export class AuthController {
   forgotPassword = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { email } = req.body;
-      const { ipAddress, userAgent } = AuthMiddleware.extractClientInfo(req);
+      const { ipAddress } = AuthMiddleware.extractClientInfo(req);
 
       // In a real implementation, you would:
       // 1. Generate a reset token
