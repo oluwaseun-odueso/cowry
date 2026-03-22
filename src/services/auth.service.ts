@@ -288,7 +288,10 @@ export class AuthService {
   }
 
   /**
-   * Refresh access token using refresh token
+   * Refresh access token using refresh token.
+   * Implements rotation (old token invalidated on use) and reuse detection
+   * (presenting an already-rotated token signals potential token theft →
+   * all sessions for the user are revoked).
    */
   async refreshToken(refreshToken: string, ipAddress: string, userAgent: string) {
     try {
@@ -297,9 +300,30 @@ export class AuthService {
         process.env.JWT_REFRESH_SECRET!,
       ) as TokenPayload;
 
+      // Look for a valid (not-yet-rotated) session
       const session = await SessionRepository.findByRefreshToken(refreshToken, decoded.userId);
 
       if (!session) {
+        // Check if this token was already used (revoked session exists)
+        const revokedSession = await SessionRepository.findByRefreshTokenIgnoreValidity(
+          refreshToken,
+          decoded.userId,
+        );
+
+        if (revokedSession) {
+          // Token reuse detected — possible session theft; revoke everything
+          await SessionRepository.invalidateByUserId(decoded.userId);
+          await FraudAlertRepository.create({
+            userId: decoded.userId,
+            ruleName: "REFRESH_TOKEN_REUSE",
+            riskLevel: FraudRiskLevel.HIGH,
+            description: `Refresh token reuse detected from ${ipAddress} — all sessions revoked`,
+            ipAddress,
+            metadata: { userAgent, timestamp: new Date() },
+            action: "block",
+          });
+        }
+
         throw new Error("Invalid refresh token");
       }
 
@@ -313,6 +337,9 @@ export class AuthService {
         throw new Error("User not found or inactive");
       }
 
+      // Invalidate the current session BEFORE issuing new tokens (rotation)
+      await SessionRepository.invalidate(session.id);
+
       const sessionData: {
         ipAddress: string;
         userAgent: string;
@@ -320,11 +347,7 @@ export class AuthService {
       } = { ipAddress, userAgent };
       if (session.location) sessionData.location = session.location as GeoLocation;
 
-      const tokens = await this.generateTokens(user, sessionData);
-
-      await SessionRepository.invalidate(session.id);
-
-      return tokens;
+      return await this.generateTokens(user, sessionData);
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
         throw new Error("Invalid refresh token");
