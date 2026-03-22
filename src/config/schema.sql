@@ -25,6 +25,19 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `uq_users_phone_number` (`phone_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `email_verifications` (
+  `id`         CHAR(36)     NOT NULL,
+  `user_id`    CHAR(36)     NOT NULL,
+  `token_hash` VARCHAR(255) NOT NULL,
+  `expires_at` DATETIME     NOT NULL,
+  `used`       TINYINT(1)   NOT NULL DEFAULT 0,
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_email_verifications_user_id` (`user_id`),
+  CONSTRAINT `fk_email_verifications_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `password_resets` (
   `id`         CHAR(36)     NOT NULL,
   `user_id`    CHAR(36)     NOT NULL,
