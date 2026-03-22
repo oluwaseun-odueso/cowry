@@ -321,6 +321,19 @@ export class AuthController {
   };
 
   /**
+   * Disable MFA — requires current TOTP code or a backup code
+   */
+  disableMfa = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { code } = req.body;
+      await this.authService.disableMfa(req.user!.id, code);
+      return res.status(200).json({ status: 'success', message: 'MFA disabled.' });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Verify MFA code after password login — exchanges challenge token for full session tokens
    */
   verifyMfa = async (req: Request, res: Response): Promise<Response> => {
