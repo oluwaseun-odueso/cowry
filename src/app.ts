@@ -21,15 +21,29 @@ const PORT = process.env.PORT || 3000
 // Set TRUST_PROXY=1 in production (or a specific IP/CIDR for tighter control).
 app.set('trust proxy', process.env.TRUST_PROXY ?? (process.env.NODE_ENV === 'production' ? 1 : false))
 
+const isProd = process.env.NODE_ENV === 'production';
+
 app.use(helmet({
-    contentSecurityPolicy: {
+  // HSTS: tell browsers to always use HTTPS for this origin.
+  // Only enforced in production — local dev runs over HTTP.
+  strictTransportSecurity: isProd
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false,
+
+  // CSP: tighten script rules in production by dropping unsafe-eval.
+  contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: isProd
+        ? ["'self'", "'unsafe-inline'"]
+        : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
+
+  // Stop the browser leaking the full URL to third-party origins.
+  referrerPolicy: { policy: 'no-referrer' },
 }))
 
 app.use(cors({
