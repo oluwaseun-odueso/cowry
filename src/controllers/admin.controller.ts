@@ -80,4 +80,17 @@ export class AdminController {
       return res.status(500).json({ status: 'error', message: error.message });
     }
   };
+
+  /**
+   * GET /admin/users
+   * List all users (paginated)
+   */
+  getUsers = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const users = (await UserRepository.findAll()).map(toPublicUser);
+      return res.status(200).json({ status: 'success', data: { users } });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
 }
