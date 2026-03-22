@@ -85,6 +85,15 @@ export class SessionRepository {
     return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
   }
 
+  /** Find a session by refresh token regardless of validity — used for reuse detection */
+  static async findByRefreshTokenIgnoreValidity(refreshToken: string, userId: string): Promise<Session | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT * FROM sessions WHERE refresh_token = ? AND user_id = ?',
+      [refreshToken, userId]
+    );
+    return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
+  }
+
   static async findByIdAndUserId(id: string, userId: string): Promise<Session | null> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       'SELECT * FROM sessions WHERE id = ? AND user_id = ?',
