@@ -216,26 +216,17 @@ export class AuthController {
   forgotPassword = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { email } = req.body;
-      const { ipAddress } = AuthMiddleware.extractClientInfo(req);
+      const token = await this.authService.generatePasswordResetToken(email);
 
-      // In a real implementation, you would:
-      // 1. Generate a reset token
-      // 2. Save it to the database with expiration
-      // 3. Send email with reset link
-
-      // For now, just log the request
-      console.log(`Password reset requested for ${email} from ${ipAddress}`);
-
-      // Always return success to prevent email enumeration
+      // NOTE: In production, send `token` via email instead of returning it.
+      // Returning it here for prototype demonstration purposes only.
       return res.status(200).json({
         status: 'success',
-        message: 'If the email exists, a password reset link will be sent'
+        message: 'If the email exists, a password reset link has been sent.',
+        ...(process.env.NODE_ENV !== 'production' && { resetToken: token }),
       });
     } catch (error: any) {
-      return res.status(500).json({
-        status: 'error',
-        message: error.message
-      });
+      return res.status(500).json({ status: 'error', message: error.message });
     }
   };
 
@@ -245,23 +236,13 @@ export class AuthController {
   resetPassword = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { token, password } = req.body;
-      const { ipAddress } = AuthMiddleware.extractClientInfo(req);
-
-      // In a real implementation, you would:
-      // 1. Verify the reset token
-      // 2. Find the user
-      // 3. Update password
-      // 4. Invalidate all sessions
-
+      await this.authService.resetPassword(token, password);
       return res.status(200).json({
         status: 'success',
-        message: 'Password reset successful'
+        message: 'Password reset successful. Please log in with your new password.',
       });
     } catch (error: any) {
-      return res.status(400).json({
-        status: 'error',
-        message: error.message
-      });
+      return res.status(400).json({ status: 'error', message: error.message });
     }
   };
 
