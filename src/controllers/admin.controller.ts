@@ -62,4 +62,22 @@ export class AdminController {
       return res.status(500).json({ status: 'error', message: error.message });
     }
   };
+
+  /**
+   * PATCH /admin/audit-log/:alertId/resolve
+   * Mark a fraud alert as resolved
+   */
+  resolveAlert = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const alertId = req.params.alertId as string;
+      const resolvedBy = req.user!.email;
+      const resolved = await FraudAlertRepository.resolve(alertId, resolvedBy);
+      if (!resolved) {
+        return res.status(404).json({ status: 'error', message: 'Alert not found.' });
+      }
+      return res.status(200).json({ status: 'success', message: 'Alert marked as resolved.' });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
 }
