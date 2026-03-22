@@ -304,6 +304,23 @@ export class AuthController {
   };
 
   /**
+   * Confirm MFA setup with first TOTP code — enables MFA and returns backup codes
+   */
+  enableMfa = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { code } = req.body;
+      const result = await this.authService.enableMfa(req.user!.id, code);
+      return res.status(200).json({
+        status: 'success',
+        message: 'MFA enabled. Save these backup codes — they will not be shown again.',
+        data: result
+      });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Helper: Set refresh token cookie
    */
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
