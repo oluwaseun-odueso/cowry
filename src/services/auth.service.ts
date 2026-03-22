@@ -697,6 +697,37 @@ export class AuthService {
           action: "alert",
         });
       }
+
+      // ── Velocity check (distinct IPs in window) ──────────────────────────
+      const ipThreshold = parseInt(process.env.VELOCITY_IP_THRESHOLD || "2");
+      const distinctIps = new Set(recentSessions.map((s) => s.ipAddress));
+      if (distinctIps.size > ipThreshold) {
+        await FraudAlertRepository.create({
+          userId,
+          ruleName: "IP_VELOCITY",
+          riskLevel: FraudRiskLevel.HIGH,
+          description: `Login from ${distinctIps.size} different IPs within ${velocityWindow} minutes`,
+          ipAddress,
+          location,
+          metadata: { distinctIps: Array.from(distinctIps), windowMinutes: velocityWindow },
+          action: "alert",
+        });
+      }
+
+      // ── Concurrent session limit ─────────────────────────────────────────
+      const maxSessions = parseInt(process.env.MAX_CONCURRENT_SESSIONS || "5");
+      if (sessions.length > maxSessions) {
+        await FraudAlertRepository.create({
+          userId,
+          ruleName: "CONCURRENT_SESSIONS_EXCEEDED",
+          riskLevel: FraudRiskLevel.MEDIUM,
+          description: `User has ${sessions.length} active sessions (limit: ${maxSessions})`,
+          ipAddress,
+          location,
+          metadata: { activeSessions: sessions.length, limit: maxSessions },
+          action: "alert",
+        });
+      }
     } catch (err) {
       console.error("Fraud check error:", err);
     }
