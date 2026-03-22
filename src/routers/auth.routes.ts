@@ -155,6 +155,39 @@ router.get(
 );
 
 /**
+ * @route GET /api/v1/auth/sessions
+ * @desc List all active sessions for the authenticated user
+ * @access Private
+ */
+router.get(
+  '/sessions',
+  AuthMiddleware.authenticate,
+  authController.getSessions
+);
+
+/**
+ * @route DELETE /api/v1/auth/sessions/:sessionId
+ * @desc Revoke a specific session
+ * @access Private
+ */
+router.delete(
+  '/sessions/:sessionId',
+  AuthMiddleware.authenticate,
+  authController.revokeSession
+);
+
+/**
+ * @route POST /api/v1/auth/logout-all
+ * @desc Logout from all devices
+ * @access Private
+ */
+router.post(
+  '/logout-all',
+  AuthMiddleware.authenticate,
+  authController.logoutAll
+);
+
+/**
  * @route PUT /api/v1/auth/change-password
  * @desc Change password
  * @access Private
