@@ -134,6 +134,15 @@ export class ValidationMiddleware {
   ];
 
   /**
+   * Verify email — accepts the plain-text token from the verification link
+   */
+  static verifyEmailRules: ValidationChain[] = [
+    body('token')
+      .notEmpty().withMessage('Verification token is required')
+      .isLength({ min: 64, max: 64 }).withMessage('Invalid verification token'),
+  ];
+
+  /**
    * Enable MFA — confirm setup with first TOTP code
    */
   static enableMfaRules: ValidationChain[] = [
