@@ -83,7 +83,9 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user, sessionData);
 
-    return { user: toPublicUser(user), ...tokens };
+    const verificationToken = await this.generateEmailVerificationToken(user.id);
+
+    return { user: toPublicUser(user), ...tokens, verificationToken };
   }
 
   /**

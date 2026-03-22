@@ -40,10 +40,15 @@ export class AuthController {
         location
       });
 
+      const { verificationToken, ...rest } = result;
       return res.status(201).json({
         status: 'success',
         message: 'User registered successfully',
-        data: result
+        data: {
+          ...rest,
+          // Returned here for prototype demo only — send via email in production
+          ...(process.env.NODE_ENV !== 'production' && { verificationToken }),
+        },
       });
     } catch (error: any) {
       return res.status(400).json({
@@ -265,6 +270,22 @@ export class AuthController {
         status: 'error',
         message: error.message
       });
+    }
+  };
+
+  /**
+   * Verify email address using the plain-text token from the verification link
+   */
+  verifyEmail = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { token } = req.body;
+      await this.authService.verifyEmail(token);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Email verified successfully. You can now log in.',
+      });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
     }
   };
 

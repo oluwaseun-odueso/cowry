@@ -168,15 +168,14 @@ router.put(
 
 /**
  * @route POST /api/v1/auth/verify-email
- * @desc Verify email address
- * @access Private
+ * @desc Verify email address with token from verification link
+ * @access Public
  */
 router.post(
   '/verify-email',
-  AuthMiddleware.authenticate,
-  (req, res) => {
-    res.json({ message: 'Email verification endpoint' });
-  }
+  authLimiter,
+  ValidationMiddleware.validate(ValidationMiddleware.verifyEmailRules),
+  authController.verifyEmail
 );
 
 /**
