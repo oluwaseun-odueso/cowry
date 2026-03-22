@@ -154,30 +154,49 @@ router.post(
 );
 
 /**
+ * @route POST /api/v1/auth/setup-mfa
+ * @desc Generate TOTP secret and QR code URI (step 1 of MFA setup)
+ * @access Private
+ */
+router.post(
+  '/setup-mfa',
+  AuthMiddleware.authenticate,
+  authController.setupMfa
+);
+
+/**
  * @route POST /api/v1/auth/enable-mfa
- * @desc Enable multi-factor authentication
+ * @desc Confirm MFA with first TOTP code, activate MFA, receive backup codes (step 2)
  * @access Private
  */
 router.post(
   '/enable-mfa',
   AuthMiddleware.authenticate,
   ValidationMiddleware.validate(ValidationMiddleware.enableMfaRules),
-  (req, res) => {
-    res.json({ message: 'MFA setup endpoint' });
-  }
+  authController.enableMfa
+);
+
+/**
+ * @route POST /api/v1/auth/verify-mfa
+ * @desc Exchange MFA challenge token + TOTP/backup code for full session tokens
+ * @access Public
+ */
+router.post(
+  '/verify-mfa',
+  ValidationMiddleware.validate(ValidationMiddleware.verifyMfaRules),
+  authController.verifyMfa
 );
 
 /**
  * @route POST /api/v1/auth/disable-mfa
- * @desc Disable multi-factor authentication
+ * @desc Disable MFA — requires current TOTP or backup code
  * @access Private
  */
 router.post(
   '/disable-mfa',
   AuthMiddleware.authenticate,
-  (req, res) => {
-    res.json({ message: 'MFA disable endpoint' });
-  }
+  ValidationMiddleware.validate(ValidationMiddleware.disableMfaRules),
+  authController.disableMfa
 );
 
 // ============================================
