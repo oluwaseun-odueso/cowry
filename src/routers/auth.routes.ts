@@ -209,6 +209,7 @@ router.post(
  */
 router.post(
   '/verify-mfa',
+  loginLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.verifyMfaRules),
   authController.verifyMfa
 );
