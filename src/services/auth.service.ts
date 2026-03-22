@@ -645,8 +645,10 @@ export class AuthService {
     location?: GeoLocation,
   ): Promise<void> {
     try {
-      const [sessions] = await Promise.all([
+      const velocityWindow = parseInt(process.env.LOGIN_ATTEMPT_WINDOW || "15");
+      const [sessions, recentSessions] = await Promise.all([
         SessionRepository.findActiveByUserId(userId),
+        SessionRepository.findRecentByUserId(userId, velocityWindow),
       ]);
 
       // ── Unusual location ─────────────────────────────────────────────────
