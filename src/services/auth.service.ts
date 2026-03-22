@@ -6,6 +6,7 @@ import {
   SessionRepository,
   FraudAlertRepository,
   MfaBackupCodeRepository,
+  PasswordResetRepository,
   comparePassword,
   isLocked,
   resetLoginAttempts,
@@ -646,26 +647,45 @@ export class AuthService {
   }
 
   /**
-   * Generate password reset token
+   * Generate a password reset token.
+   * Always returns a token string to prevent email enumeration — if the email
+   * does not exist the token is a dummy (not stored) and will silently fail on use.
    */
   async generatePasswordResetToken(email: string): Promise<string> {
+    const plainToken = randomBytes(32).toString("hex");
     const user = await UserRepository.findByEmail(email.toLowerCase());
-
-    if (!user) {
-      return randomBytes(32).toString("hex");
+    if (user) {
+      await PasswordResetRepository.create(user.id, plainToken);
     }
-
-    randomBytes(32); // generate token placeholder
-    // TODO: store hashed token + expiry in a dedicated password_resets table
-    throw new Error("Password reset not yet implemented");
+    // Return the plain token regardless — caller logs/emails it
+    return plainToken;
   }
 
   /**
-   * Reset password with token
+   * Reset password with a plain-text token from the reset email.
+   * Verifies the token, updates the bcrypt hash, revokes all active sessions,
+   * and marks the token as used (one-time only).
    */
-  async resetPassword(_token: string, _newPassword: string): Promise<boolean> {
-    // TODO: implement with a dedicated password_resets table
-    throw new Error("Password reset not yet implemented");
+  async resetPassword(plainToken: string, newPassword: string): Promise<boolean> {
+    const record = await PasswordResetRepository.findAndVerify(plainToken);
+    if (!record) {
+      throw new Error("Invalid or expired password reset token");
+    }
+
+    await UserRepository.update(record.userId, { password: newPassword });
+    await SessionRepository.invalidateByUserId(record.userId);
+    await PasswordResetRepository.markUsed(record.id);
+
+    await FraudAlertRepository.create({
+      userId: record.userId,
+      ruleName: "PASSWORD_RESET",
+      riskLevel: FraudRiskLevel.MEDIUM,
+      description: "Password was reset via token",
+      ipAddress: "system",
+      action: "log",
+    });
+
+    return true;
   }
 
   /**
