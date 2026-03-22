@@ -7,6 +7,7 @@ import {
   FraudAlertRepository,
   MfaBackupCodeRepository,
   PasswordResetRepository,
+  EmailVerificationRepository,
   comparePassword,
   isLocked,
   resetLoginAttempts,
@@ -177,6 +178,9 @@ export class AuthService {
 
     // Successful password check — reset lockout counters
     user = await resetLoginAttempts(user);
+
+    // Run location + device fraud checks (non-blocking)
+    void this.runFraudChecks(user.id, credentials.ipAddress, credentials.userAgent, credentials.location);
 
     // If MFA is enabled, issue a short-lived challenge token instead of full tokens
     if (user.isMfaEnabled) {
@@ -522,6 +526,9 @@ export class AuthService {
 
     await UserRepository.update(user.id, { lastLogin: new Date(), lastLoginIp: ipAddress });
 
+    // Run location + device fraud checks (non-blocking)
+    void this.runFraudChecks(user.id, ipAddress, userAgent, location);
+
     await FraudAlertRepository.create({
       userId: user.id,
       ruleName: "SUCCESSFUL_LOGIN",
@@ -623,6 +630,87 @@ export class AuthService {
     }
   }
 
+  // ─── Fraud Detection ──────────────────────────────────────────────────────
+
+  /**
+   * Run location and device fraud checks after a successful authentication.
+   * Fires-and-forgets fraud alerts — never throws so it cannot break the login flow.
+   */
+  private async runFraudChecks(
+    userId: string,
+    ipAddress: string,
+    userAgent: string,
+    location?: GeoLocation,
+  ): Promise<void> {
+    try {
+      const [sessions] = await Promise.all([
+        SessionRepository.findActiveByUserId(userId),
+      ]);
+
+      // ── Unusual location ─────────────────────────────────────────────────
+      if (location && sessions.length > 0) {
+        const threshold = parseFloat(process.env.UNUSUAL_LOCATION_THRESHOLD || "50");
+        for (const session of sessions) {
+          const loc = session.location as any;
+          if (!loc?.latitude || !loc?.longitude) continue;
+          const dist = this.haversineKm(
+            location.latitude, location.longitude,
+            loc.latitude, loc.longitude,
+          );
+          if (dist > threshold) {
+            await FraudAlertRepository.create({
+              userId,
+              ruleName: "UNUSUAL_LOCATION",
+              riskLevel: FraudRiskLevel.HIGH,
+              description: `Login from ${location.city ?? ipAddress} is ${Math.round(dist)} km from a known location`,
+              ipAddress,
+              location,
+              metadata: { distanceKm: Math.round(dist), knownLocation: loc, threshold },
+              action: "alert",
+            });
+            break; // one alert per login is enough
+          }
+        }
+      }
+
+      // ── New device ───────────────────────────────────────────────────────
+      const deviceInfo = this.parseUserAgent(userAgent);
+      const deviceKey = `${deviceInfo.browser}|${deviceInfo.os}`;
+      const knownDevice = sessions.some((s) => {
+        const d = s.deviceInfo as any;
+        return d && `${d.browser}|${d.os}` === deviceKey;
+      });
+
+      if (!knownDevice && sessions.length > 0) {
+        await FraudAlertRepository.create({
+          userId,
+          ruleName: "NEW_DEVICE",
+          riskLevel: FraudRiskLevel.MEDIUM,
+          description: `Login from a new device: ${deviceInfo.browser} on ${deviceInfo.os}`,
+          ipAddress,
+          location,
+          metadata: { device: deviceInfo },
+          action: "alert",
+        });
+      }
+    } catch (err) {
+      console.error("Fraud check error:", err);
+    }
+  }
+
+  /** Haversine great-circle distance in kilometres between two lat/lng points */
+  private haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
   /**
    * Log failed login attempt
    */
@@ -710,9 +798,26 @@ export class AuthService {
   }
 
   /**
-   * Verify email with token
+   * Generate an email verification token for a user.
+   * Returns the plain token — caller should send it via email in production.
    */
-  async verifyEmail(token: string): Promise<boolean> {
+  async generateEmailVerificationToken(userId: string): Promise<string> {
+    const plainToken = randomBytes(32).toString("hex");
+    await EmailVerificationRepository.create(userId, plainToken);
+    return plainToken;
+  }
+
+  /**
+   * Verify an email address using the plain-text token from the verification link.
+   * Marks emailVerified = true and consumes the token (one-time use).
+   */
+  async verifyEmail(plainToken: string): Promise<boolean> {
+    const record = await EmailVerificationRepository.findAndVerify(plainToken);
+    if (!record) {
+      throw new Error("Invalid or expired verification token");
+    }
+    await UserRepository.update(record.userId, { emailVerified: true });
+    await EmailVerificationRepository.markUsed(record.id);
     return true;
   }
 
