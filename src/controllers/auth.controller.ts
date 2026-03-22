@@ -321,6 +321,39 @@ export class AuthController {
   };
 
   /**
+   * Verify MFA code after password login — exchanges challenge token for full session tokens
+   */
+  verifyMfa = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { challengeToken, code } = req.body;
+      const { ipAddress, userAgent } = AuthMiddleware.extractClientInfo(req);
+      const location = this.getLocationFromIp(ipAddress);
+
+      const result = await this.authService.verifyMfaChallenge(
+        challengeToken,
+        code,
+        ipAddress,
+        userAgent,
+        location
+      );
+
+      this.setRefreshTokenCookie(res, result.refreshToken);
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'MFA verification successful',
+        data: {
+          user: result.user,
+          accessToken: result.accessToken,
+          expiresIn: result.expiresIn
+        }
+      });
+    } catch (error: any) {
+      return res.status(401).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Helper: Set refresh token cookie
    */
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
