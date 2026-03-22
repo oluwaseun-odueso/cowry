@@ -1,9 +1,30 @@
 import { Router } from 'express';
 import passport from 'passport';
+import rateLimit from 'express-rate-limit';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { ValidationMiddleware } from '../middleware/validation.middleware';
 import { UserRepository, toPublicUser } from '../models'
+
+// Tight limiter for credential submission endpoints (login, MFA verify, token refresh)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.ip ?? 'unknown',
+  message: { status: 'error', message: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Broader limiter for registration and password-recovery endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => req.ip ?? 'unknown',
+  message: { status: 'error', message: 'Too many requests. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const router = Router();
 const authController = new AuthController();
@@ -19,6 +40,7 @@ const authController = new AuthController();
  */
 router.post(
   '/register',
+  authLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.registerRules),
   authController.register
 );
@@ -30,6 +52,7 @@ router.post(
  */
 router.post(
   '/login',
+  loginLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.loginRules),
   authController.login
 );
@@ -41,6 +64,7 @@ router.post(
  */
 router.post(
   '/refresh-token',
+  loginLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.refreshTokenRules),
   authController.refreshToken
 );
@@ -52,6 +76,7 @@ router.post(
  */
 router.post(
   '/forgot-password',
+  authLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.forgotPasswordRules),
   authController.forgotPassword
 );
@@ -63,6 +88,7 @@ router.post(
  */
 router.post(
   '/reset-password',
+  authLimiter,
   ValidationMiddleware.validate(ValidationMiddleware.resetPasswordRules),
   authController.resetPassword
 );
