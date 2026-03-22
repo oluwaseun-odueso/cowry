@@ -37,4 +37,34 @@ export class PasswordResetRepository {
       [uuidv4(), userId, hash, expiresAt],
     );
   }
+
+  /** Find all active (unused, unexpired) reset records for a user. */
+  static async findActiveByUserId(userId: string): Promise<PasswordReset[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM password_resets WHERE user_id = ? AND used = 0 AND expires_at > NOW()",
+      [userId],
+    );
+    return rows.map(mapRow);
+  }
+
+  /**
+   * Verify a plain-text token against all active records for any user.
+   * Returns the matching record, or null if no match.
+   */
+  static async findAndVerify(plainToken: string): Promise<PasswordReset | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM password_resets WHERE used = 0 AND expires_at > NOW()",
+    );
+    for (const row of rows) {
+      const record = mapRow(row as RowDataPacket);
+      const match = await bcrypt.compare(plainToken, record.tokenHash);
+      if (match) return record;
+    }
+    return null;
+  }
+
+  /** Mark a token as used after a successful password reset. */
+  static async markUsed(id: string): Promise<void> {
+    await pool.execute("UPDATE password_resets SET used = 1 WHERE id = ?", [id]);
+  }
 }
