@@ -108,6 +108,72 @@ export class AccountService {
     };
   }
 
+  async withdraw(
+    userId: string,
+    accountId: string,
+    amount: number,
+    description?: string
+  ): Promise<Transaction> {
+    const account = await this.getAccount(userId, accountId);
+    if (account.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Account is suspended.');
+    }
+    if (account.balance < amount) {
+      throw new Error('Insufficient funds.');
+    }
+
+    // Daily withdrawal limit check
+    const todayDebits = await TransactionRepository.sumDebitsForAccountToday(accountId);
+    if (todayDebits + amount > DAILY_WITHDRAWAL_LIMIT) {
+      throw new Error(
+        `Withdrawal would exceed daily limit of £${DAILY_WITHDRAWAL_LIMIT.toLocaleString()}.`
+      );
+    }
+
+    const reference = this.generateReference();
+    const newBalance = account.balance - amount;
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [newBalance, accountId]
+      );
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'debit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), accountId, amount, account.currency, reference, description ?? null]
+      );
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+
+    const [rows] = await pool.execute<any[]>(
+      'SELECT * FROM transactions WHERE reference = ?',
+      [reference]
+    );
+    const tx = rows[0];
+
+    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.DEBIT).catch(() => {});
+
+    return {
+      id: tx.id,
+      accountId: tx.account_id,
+      type: tx.type,
+      amount: parseFloat(tx.amount),
+      currency: tx.currency,
+      reference: tx.reference,
+      description: tx.description ?? undefined,
+      status: tx.status,
+      createdAt: tx.created_at,
+    };
+  }
+
   private async runTransactionFraudChecks(
     userId: string,
     accountId: string,
