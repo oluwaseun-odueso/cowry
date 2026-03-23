@@ -174,6 +174,86 @@ export class AccountService {
     };
   }
 
+  async transfer(
+    userId: string,
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+    description?: string
+  ): Promise<Transfer> {
+    if (fromAccountId === toAccountId) {
+      throw new Error('Cannot transfer to the same account.');
+    }
+
+    const fromAccount = await this.getAccount(userId, fromAccountId);
+    if (fromAccount.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Source account is suspended.');
+    }
+    if (fromAccount.balance < amount) {
+      throw new Error('Insufficient funds.');
+    }
+
+    const toAccount = await AccountRepository.findById(toAccountId);
+    if (!toAccount) throw new Error('Destination account not found.');
+    if (toAccount.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Destination account is suspended.');
+    }
+    if (fromAccount.currency !== toAccount.currency) {
+      throw new Error('Currency mismatch between accounts.');
+    }
+
+    const reference = this.generateReference();
+    const debitRef = this.generateReference();
+    const creditRef = this.generateReference();
+
+    const conn = await pool.getConnection();
+    let transferId: string;
+    try {
+      await conn.beginTransaction();
+
+      // Debit source
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [fromAccount.balance - amount, fromAccountId]
+      );
+      // Credit destination
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [toAccount.balance + amount, toAccountId]
+      );
+      // Debit transaction record
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'debit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), fromAccountId, amount, fromAccount.currency, debitRef, description ?? null]
+      );
+      // Credit transaction record
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'credit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), toAccountId, amount, toAccount.currency, creditRef, description ?? null]
+      );
+      // Transfer record
+      transferId = uuidv4();
+      await conn.execute(
+        `INSERT INTO transfers (id, from_account_id, to_account_id, amount, currency, reference, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'completed')`,
+        [transferId, fromAccountId, toAccountId, amount, fromAccount.currency, reference]
+      );
+
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+
+    this.runTransferFraudChecks(userId, fromAccountId, toAccountId, amount).catch(() => {});
+
+    return (await TransferRepository.findById(transferId!))!;
+  }
+
   private async runTransactionFraudChecks(
     userId: string,
     accountId: string,
