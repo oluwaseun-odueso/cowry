@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { body, validationResult, ValidationChain } from 'express-validator';
+import { body, query, validationResult, ValidationChain } from 'express-validator';
 
 export class ValidationMiddleware {
   /**
@@ -170,4 +170,15 @@ export class ValidationMiddleware {
       .notEmpty().withMessage('Code is required')
       .matches(/^(\d{6}|[A-F0-9]{8})$/).withMessage('Code must be a 6-digit TOTP or 8-character backup code')
   ];
+
+  static createAccountRules: ValidationChain[] = [
+    body('type')
+      .notEmpty().withMessage('Account type is required')
+      .isIn(['savings', 'current']).withMessage('Account type must be savings or current'),
+    body('currency')
+      .optional()
+      .isLength({ min: 3, max: 3 }).withMessage('Currency must be a 3-letter code')
+      .isAlpha().withMessage('Currency must contain only letters'),
+  ];
+
 }
