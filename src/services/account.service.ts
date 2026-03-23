@@ -254,6 +254,35 @@ export class AccountService {
     return (await TransferRepository.findById(transferId!))!;
   }
 
+  async getTransactions(
+    userId: string,
+    accountId: string,
+    options?: {
+      type?: TransactionType;
+      from?: Date;
+      to?: Date;
+      minAmount?: number;
+      maxAmount?: number;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ transactions: Transaction[]; total: number; page: number; limit: number }> {
+    await this.getAccount(userId, accountId); // ownership check
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const result = await TransactionRepository.findByAccountId(accountId, { ...options, page, limit });
+    return { ...result, page, limit };
+  }
+
+  async getTransaction(userId: string, transactionId: string): Promise<Transaction> {
+    const tx = await TransactionRepository.findById(transactionId);
+    if (!tx) throw new Error('Transaction not found.');
+    // Verify the account belongs to the user
+    const account = await AccountRepository.findById(tx.accountId);
+    if (!account || account.userId !== userId) throw new Error('Transaction not found.');
+    return tx;
+  }
+
   private async runTransactionFraudChecks(
     userId: string,
     accountId: string,
