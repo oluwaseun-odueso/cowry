@@ -40,4 +40,15 @@ export class AccountService {
     }
     return AccountRepository.create({ userId, accountType: type, currency: currency.toUpperCase() });
   }
+
+  async getAccounts(userId: string): Promise<Account[]> {
+    return AccountRepository.findByUserId(userId);
+  }
+
+  async getAccount(userId: string, accountId: string): Promise<Account> {
+    const account = await AccountRepository.findById(accountId);
+    if (!account) throw new Error('Account not found.');
+    if (account.userId !== userId) throw new Error('Account not found.');
+    return account;
+  }
 }
