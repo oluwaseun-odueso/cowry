@@ -25,3 +25,23 @@ function mapRow(row: RowDataPacket): Transfer {
   };
 }
 
+export class TransferRepository {
+  static async create(data: CreateTransferInput): Promise<Transfer> {
+    const id = uuidv4();
+    await pool.execute<ResultSetHeader>(
+      `INSERT INTO transfers (id, from_account_id, to_account_id, amount, currency, reference, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        data.fromAccountId,
+        data.toAccountId,
+        data.amount,
+        data.currency,
+        data.reference,
+        data.status ?? TransactionStatus.COMPLETED,
+      ]
+    );
+    return (await TransferRepository.findById(id))!;
+  }
+
+}
