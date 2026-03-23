@@ -9,6 +9,62 @@ export enum AccountStatus {
   LOCKED = "locked",
 }
 
+export enum AccountType {
+  SAVINGS = "savings",
+  CURRENT = "current",
+}
+
+export enum BankAccountStatus {
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+}
+
+export enum TransactionType {
+  CREDIT = "credit",
+  DEBIT = "debit",
+}
+
+export enum TransactionStatus {
+  PENDING = "pending",
+  COMPLETED = "completed",
+  FAILED = "failed",
+}
+
+export interface Account {
+  id: string;
+  userId: string;
+  accountNumber: string;
+  accountType: AccountType;
+  currency: string;
+  balance: number;
+  status: BankAccountStatus;
+  createdAt: Date;
+}
+
+export interface Transaction {
+  id: string;
+  accountId: string;
+  type: TransactionType;
+  amount: number;
+  currency: string;
+  reference: string;
+  description?: string;
+  status: TransactionStatus;
+  metadata?: object;
+  createdAt: Date;
+}
+
+export interface Transfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  currency: string;
+  reference: string;
+  status: TransactionStatus;
+  createdAt: Date;
+}
+
 export enum FraudRiskLevel {
   LOW = "low",
   MEDIUM = "medium",
