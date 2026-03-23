@@ -110,3 +110,58 @@ CREATE TABLE IF NOT EXISTS `fraud_alerts` (
   CONSTRAINT `fk_fraud_alerts_session`
     FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `accounts` (
+  `id`             CHAR(36)                        NOT NULL,
+  `user_id`        CHAR(36)                        NOT NULL,
+  `account_number` VARCHAR(10)                     NOT NULL,
+  `account_type`   ENUM('savings', 'current')      NOT NULL,
+  `currency`       VARCHAR(3)                      NOT NULL DEFAULT 'GBP',
+  `balance`        DECIMAL(15,2)                   NOT NULL DEFAULT 0.00,
+  `status`         ENUM('active', 'suspended')     NOT NULL DEFAULT 'active',
+  `created_at`     DATETIME                        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_accounts_account_number` (`account_number`),
+  KEY `idx_accounts_user_id` (`user_id`),
+  CONSTRAINT `fk_accounts_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `transactions` (
+  `id`          CHAR(36)                                    NOT NULL,
+  `account_id`  CHAR(36)                                    NOT NULL,
+  `type`        ENUM('credit', 'debit')                     NOT NULL,
+  `amount`      DECIMAL(15,2)                               NOT NULL,
+  `currency`    VARCHAR(3)                                  NOT NULL,
+  `reference`   VARCHAR(50)                                 NOT NULL,
+  `description` VARCHAR(255)                                NULL,
+  `status`      ENUM('pending', 'completed', 'failed')      NOT NULL DEFAULT 'completed',
+  `metadata`    JSON                                        NULL,
+  `created_at`  DATETIME                                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_transactions_reference` (`reference`),
+  KEY `idx_transactions_account_id` (`account_id`),
+  KEY `idx_transactions_type` (`type`),
+  KEY `idx_transactions_created_at` (`created_at`),
+  CONSTRAINT `fk_transactions_account`
+    FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `transfers` (
+  `id`              CHAR(36)                                    NOT NULL,
+  `from_account_id` CHAR(36)                                    NOT NULL,
+  `to_account_id`   CHAR(36)                                    NOT NULL,
+  `amount`          DECIMAL(15,2)                               NOT NULL,
+  `currency`        VARCHAR(3)                                  NOT NULL,
+  `reference`       VARCHAR(50)                                 NOT NULL,
+  `status`          ENUM('pending', 'completed', 'failed')      NOT NULL DEFAULT 'completed',
+  `created_at`      DATETIME                                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_transfers_reference` (`reference`),
+  KEY `idx_transfers_from_account_id` (`from_account_id`),
+  KEY `idx_transfers_to_account_id` (`to_account_id`),
+  CONSTRAINT `fk_transfers_from_account`
+    FOREIGN KEY (`from_account_id`) REFERENCES `accounts` (`id`),
+  CONSTRAINT `fk_transfers_to_account`
+    FOREIGN KEY (`to_account_id`) REFERENCES `accounts` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
