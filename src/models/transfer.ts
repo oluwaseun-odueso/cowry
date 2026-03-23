@@ -44,4 +44,38 @@ export class TransferRepository {
     return (await TransferRepository.findById(id))!;
   }
 
+  static async findById(id: string): Promise<Transfer | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT * FROM transfers WHERE id = ?',
+      [id]
+    );
+    return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
+  }
+
+  static async findByAccountId(accountId: string, limit = 20): Promise<Transfer[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT * FROM transfers
+       WHERE from_account_id = ? OR to_account_id = ?
+       ORDER BY created_at DESC LIMIT ?`,
+      [accountId, accountId, limit]
+    );
+    return rows.map(r => mapRow(r as RowDataPacket));
+  }
+
+  static async countRecentFromAccount(fromAccountId: string, withinMinutes: number): Promise<number> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM transfers
+       WHERE from_account_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+      [fromAccountId, withinMinutes]
+    );
+    return (rows[0] as RowDataPacket).total as number;
+  }
+
+  static async hasTransferredToAccount(fromAccountId: string, toAccountId: string): Promise<boolean> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT id FROM transfers WHERE from_account_id = ? AND to_account_id = ? LIMIT 1',
+      [fromAccountId, toAccountId]
+    );
+    return (rows as RowDataPacket[]).length > 0;
+  }
 }
