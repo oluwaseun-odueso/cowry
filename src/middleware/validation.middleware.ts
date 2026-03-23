@@ -191,4 +191,14 @@ export class ValidationMiddleware {
       .isLength({ max: 255 }).withMessage('Description cannot exceed 255 characters'),
   ];
 
+  static withdrawRules: ValidationChain[] = [
+    body('amount')
+      .notEmpty().withMessage('Amount is required')
+      .isFloat({ min: 0.01 }).withMessage('Amount must be a positive number'),
+    body('description')
+      .optional()
+      .isString().trim()
+      .isLength({ max: 255 }).withMessage('Description cannot exceed 255 characters'),
+  ];
+
 }
