@@ -68,4 +68,44 @@ export class AccountRepository {
     );
     return rows.map(r => mapRow(r as RowDataPacket));
   }
+
+  static async findByAccountNumber(accountNumber: string): Promise<Account | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT * FROM accounts WHERE account_number = ?',
+      [accountNumber]
+    );
+    return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
+  }
+
+  static async findAll(options?: { page?: number; limit?: number }): Promise<{ accounts: Account[]; total: number }> {
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const offset = (page - 1) * limit;
+
+    const [countRows] = await pool.execute<RowDataPacket[]>('SELECT COUNT(*) AS total FROM accounts');
+    const total = (countRows[0] as RowDataPacket).total as number;
+
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT * FROM accounts ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+
+    return { accounts: rows.map(r => mapRow(r as RowDataPacket)), total };
+  }
+
+  static async updateStatus(id: string, status: BankAccountStatus): Promise<boolean> {
+    const [result] = await pool.execute<ResultSetHeader>(
+      'UPDATE accounts SET status = ? WHERE id = ?',
+      [status, id]
+    );
+    return result.affectedRows > 0;
+  }
+
+  static async updateBalance(id: string, newBalance: number): Promise<boolean> {
+    const [result] = await pool.execute<ResultSetHeader>(
+      'UPDATE accounts SET balance = ? WHERE id = ?',
+      [newBalance, id]
+    );
+    return result.affectedRows > 0;
+  }
 }
