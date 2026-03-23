@@ -20,6 +20,15 @@ export { PasswordResetRepository } from './passwordReset';
 export type { EmailVerification } from './emailVerification';
 export { EmailVerificationRepository } from './emailVerification';
 
+export type { CreateAccountInput } from './account';
+export { AccountRepository } from './account';
+
+export type { CreateTransactionInput } from './transaction';
+export { TransactionRepository } from './transaction';
+
+export type { CreateTransferInput } from './transfer';
+export { TransferRepository } from './transfer';
+
 export const initializeDatabase = async (): Promise<void> => {
   const schemaPath = path.join(__dirname, '../config/schema.sql');
   const sql = fs.readFileSync(schemaPath, 'utf8');
