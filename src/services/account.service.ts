@@ -31,4 +31,13 @@ export class AccountService {
     const short = uuidv4().replace(/-/g, '').slice(0, 8).toUpperCase();
     return `TXN-${date}-${short}`;
   }
+
+  async createAccount(userId: string, type: AccountType, currency = 'GBP'): Promise<Account> {
+    const existing = await AccountRepository.findByUserId(userId);
+    const duplicate = existing.find(a => a.accountType === type);
+    if (duplicate) {
+      throw new Error(`You already have a ${type} account.`);
+    }
+    return AccountRepository.create({ userId, accountType: type, currency: currency.toUpperCase() });
+  }
 }
