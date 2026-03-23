@@ -201,4 +201,16 @@ export class ValidationMiddleware {
       .isLength({ max: 255 }).withMessage('Description cannot exceed 255 characters'),
   ];
 
+  static transferRules: ValidationChain[] = [
+    body('toAccountId')
+      .notEmpty().withMessage('Destination account ID is required')
+      .isUUID().withMessage('Destination account ID must be a valid UUID'),
+    body('amount')
+      .notEmpty().withMessage('Amount is required')
+      .isFloat({ min: 0.01 }).withMessage('Amount must be a positive number'),
+    body('description')
+      .optional()
+      .isString().trim()
+      .isLength({ max: 255 }).withMessage('Description cannot exceed 255 characters'),
+  ];
 }
