@@ -213,4 +213,13 @@ export class ValidationMiddleware {
       .isString().trim()
       .isLength({ max: 255 }).withMessage('Description cannot exceed 255 characters'),
   ];
+
+  static statementRules: ValidationChain[] = [
+    query('from')
+      .notEmpty().withMessage('from date is required')
+      .isISO8601().withMessage('from must be a valid ISO 8601 date'),
+    query('to')
+      .notEmpty().withMessage('to date is required')
+      .isISO8601().withMessage('to must be a valid ISO 8601 date'),
+  ];
 }
