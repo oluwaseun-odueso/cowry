@@ -283,6 +283,57 @@ export class AccountService {
     return tx;
   }
 
+  async getStatement(
+    userId: string,
+    accountId: string,
+    from: Date,
+    to: Date
+  ): Promise<{
+    account: Account;
+    openingBalance: number;
+    transactions: Transaction[];
+    closingBalance: number;
+    period: { from: Date; to: Date };
+  }> {
+    const account = await this.getAccount(userId, accountId);
+
+    // All transactions for this account in period
+    const { transactions } = await TransactionRepository.findByAccountId(accountId, {
+      from,
+      to,
+      page: 1,
+      limit: 1000,
+    });
+
+    // Sort oldest-first for statement
+    const sorted = [...transactions].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
+
+    // Reconstruct opening balance by working backwards from current balance
+    // For all transactions AFTER the period end, reverse their effect
+    const allTx = await TransactionRepository.findByAccountId(accountId, { page: 1, limit: 10000 });
+    let closingBalance = account.balance;
+    for (const tx of allTx.transactions) {
+      if (tx.createdAt > to) {
+        closingBalance += tx.type === TransactionType.CREDIT ? -tx.amount : tx.amount;
+      }
+    }
+
+    let openingBalance = closingBalance;
+    for (const tx of sorted) {
+      openingBalance += tx.type === TransactionType.CREDIT ? -tx.amount : tx.amount;
+    }
+
+    return {
+      account,
+      openingBalance: Math.round(openingBalance * 100) / 100,
+      transactions: sorted,
+      closingBalance: Math.round(closingBalance * 100) / 100,
+      period: { from, to },
+    };
+  }
+
   private async runTransactionFraudChecks(
     userId: string,
     accountId: string,
