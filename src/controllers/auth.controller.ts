@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { UserRepository, toPublicUser } from '../models';
+import { emailService } from '../services/email.service';
 // import { FraudDetectionService } from '../services/fraud.service';
 import { GeoLocation } from '../types';
 import geoip from 'geoip-lite';
@@ -41,14 +42,11 @@ export class AuthController {
       });
 
       const { verificationToken, ...rest } = result;
+      await emailService.sendVerificationEmail(email, firstName, verificationToken);
       return res.status(201).json({
         status: 'success',
         message: 'User registered successfully',
-        data: {
-          ...rest,
-          // Returned here for prototype demo only — send via email in production
-          ...(process.env.NODE_ENV !== 'production' && { verificationToken }),
-        },
+        data: rest,
       });
     } catch (error: any) {
       return res.status(400).json({
@@ -223,12 +221,14 @@ export class AuthController {
       const { email } = req.body;
       const token = await this.authService.generatePasswordResetToken(email);
 
-      // NOTE: In production, send `token` via email instead of returning it.
-      // Returning it here for prototype demonstration purposes only.
+      const user = await UserRepository.findByEmail(email);
+      if (user) {
+        await emailService.sendPasswordResetEmail(email, user.firstName, token);
+      }
+
       return res.status(200).json({
         status: 'success',
         message: 'If the email exists, a password reset link has been sent.',
-        ...(process.env.NODE_ENV !== 'production' && { resetToken: token }),
       });
     } catch (error: any) {
       return res.status(500).json({ status: 'error', message: error.message });
