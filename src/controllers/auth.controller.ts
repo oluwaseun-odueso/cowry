@@ -335,6 +335,22 @@ export class AuthController {
     }
   };
 
+  verifyEmailGet = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== 'string' || token.length !== 64) {
+        return res.status(400).json({ status: 'error', message: 'Invalid verification token' });
+      }
+      await this.authService.verifyEmail(token);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Email verified successfully. You can now log in.',
+      });
+    } catch (error: any) {
+      return res.status(400).json({ status: 'error', message: error.message });
+    }
+  };
+
   /**
    * Initiate MFA setup — generates TOTP secret and returns QR code URI
    */

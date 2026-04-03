@@ -113,6 +113,17 @@ router.get('/google', (req, res, next) => {
 });
 
 /**
+ * @route GET /api/v1/auth/oauth-redirect?token=...
+ * @desc Dev-only: returns the OAuth access token as JSON (no frontend needed)
+ * @access Public
+ */
+router.get('/oauth-redirect', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ status: 'error', message: 'No token provided' });
+  return res.status(200).json({ status: 'success', accessToken: token });
+});
+
+/**
  * @route GET /api/v1/auth/google/callback
  * @desc Google OAuth callback
  * @access Public
@@ -196,6 +207,13 @@ router.put(
   ValidationMiddleware.validate(ValidationMiddleware.changePasswordRules),
   authController.changePassword
 );
+
+/**
+ * @route GET /api/v1/auth/verify-email?token=...
+ * @desc Verify email when user clicks the link in their inbox (browser GET)
+ * @access Public
+ */
+router.get('/verify-email', authLimiter, authController.verifyEmailGet);
 
 /**
  * @route POST /api/v1/auth/verify-email
