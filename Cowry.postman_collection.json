@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "Cowry API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth — Public",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password1!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+2348012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data?.accessToken) {",
+                  "  pm.environment.set('ACCESS_TOKEN', json.data.accessToken);",
+                  "  pm.environment.set('REFRESH_TOKEN', json.data.refreshToken ?? '');",
+                  "}",
+                  "if (json.data?.mfaRequired && json.data?.challengeToken) {",
+                  "  pm.environment.set('MFA_CHALLENGE_TOKEN', json.data.challengeToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password1!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{VERIFICATION_TOKEN}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/verify-email",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/forgot-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{RESET_TOKEN}}\",\n  \"password\": \"NewPassword1!\",\n  \"confirmPassword\": \"NewPassword1!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/reset-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data?.accessToken) {",
+                  "  pm.environment.set('ACCESS_TOKEN', json.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/refresh-token",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Verify MFA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data?.accessToken) {",
+                  "  pm.environment.set('ACCESS_TOKEN', json.data.accessToken);",
+                  "  pm.environment.set('REFRESH_TOKEN', json.data.refreshToken ?? '');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{MFA_CHALLENGE_TOKEN}}\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/verify-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "verify-mfa"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Protected",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password1!\",\n  \"newPassword\": \"NewPassword1!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Get Sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/sessions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "sessions"]
+            }
+          }
+        },
+        {
+          "name": "Revoke Session",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/sessions/{{SESSION_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "sessions", "{{SESSION_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Setup MFA",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/setup-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "setup-mfa"]
+            }
+          }
+        },
+        {
+          "name": "Enable MFA",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/enable-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "enable-mfa"]
+            }
+          }
+        },
+        {
+          "name": "Disable MFA",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/disable-mfa",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "disable-mfa"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "logout-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Create Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"savings\",\n  \"currency\": \"NGN\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/accounts",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts"]
+            }
+          }
+        },
+        {
+          "name": "Get All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/accounts",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts"]
+            }
+          }
+        },
+        {
+          "name": "Get Account",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000,\n  \"description\": \"Initial deposit\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}/deposit",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "deposit"]
+            }
+          }
+        },
+        {
+          "name": "Withdraw",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500,\n  \"description\": \"ATM withdrawal\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}/withdraw",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "withdraw"]
+            }
+          }
+        },
+        {
+          "name": "Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toAccountId\": \"<recipient-account-id>\",\n  \"amount\": 1000,\n  \"description\": \"Transfer to friend\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}/transfer",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "transfer"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}/transactions?page=1&limit=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "transactions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "type", "value": "credit", "disabled": true },
+                { "key": "from", "value": "2026-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true },
+                { "key": "minAmount", "value": "100", "disabled": true },
+                { "key": "maxAmount", "value": "10000", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Statement",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/accounts/{{ACCOUNT_ID}}/statement?from=2026-01-01&to=2026-12-31",
+              "host": ["{{BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "statement"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-12-31" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get Transaction",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/transactions/{{TRANSACTION_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["transactions", "{{TRANSACTION_ID}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Audit Log",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/audit-log",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "audit-log"]
+            }
+          }
+        },
+        {
+          "name": "Resolve Audit Alert",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"Reviewed and cleared\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/admin/audit-log/<alertId>/resolve",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "audit-log", "<alertId>", "resolve"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
