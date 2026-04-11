@@ -1,0 +1,214 @@
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 42rem;
+  animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Shims ── */
+.shimHeader {
+  height: 3.5rem;
+  width: 14rem;
+  border-radius: 0.75rem;
+  background: oklch(0.93 0 0);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.shimCard {
+  height: 20rem;
+  border-radius: 1.25rem;
+  background: oklch(0.93 0 0);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Page header ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.9375rem;
+  color: var(--gray-text);
+}
+
+/* ── Error ── */
+.errorMsg {
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+}
+
+/* ── Hero card ── */
+.heroCard {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(135deg, var(--navy) 0%, #1873B9 100%);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(9, 57, 128, 0.2);
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 9999px;
+  background: rgba(8, 232, 222, 0.2);
+  border: 2px solid rgba(8, 232, 222, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #08E8DE;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.heroInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.heroName {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.heroEmail {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.heroBadges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.badgeAdmin    { background: rgba(8,232,222,0.2);  color: #08E8DE; }
+.badgeUser     { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+.badgeActive   { background: rgba(8,232,222,0.15);  color: #08E8DE; }
+.badgeSuspended { background: rgba(255,80,80,0.2);  color: #ff8080; }
+
+/* ── Detail/security cards ── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+  padding: 1.125rem 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.row:last-child { border-bottom: none; }
+
+.rowLabel {
+  font-size: 0.8125rem;
+  color: var(--gray-text);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 9rem;
+}
+
+.rowValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: right;
+  word-break: break-all;
+}
+
+.mono {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Status indicators ── */
+.statusOk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-success);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.statusBad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.statusWarn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-warning);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
