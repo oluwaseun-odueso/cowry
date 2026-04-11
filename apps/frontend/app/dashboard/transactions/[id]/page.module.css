@@ -1,0 +1,194 @@
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 30rem;
+  animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Back ── */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+  width: fit-content;
+}
+.backLink:hover { text-decoration: underline; }
+
+/* ── Shims ── */
+.shimBack {
+  width: 8rem; height: 1.25rem;
+  border-radius: 9999px;
+  background: oklch(0.93 0 0);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.shimReceipt {
+  height: 28rem;
+  border-radius: 1.5rem;
+  background: oklch(0.93 0 0);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Error ── */
+.errorState {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--gray-text);
+  font-size: 0.9375rem;
+}
+
+/* ── Receipt card ── */
+.receipt {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Amount hero section ── */
+.receiptHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 2.5rem 2rem 2rem;
+  background: var(--color-bg);
+}
+
+.typeIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amountHero {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Badges ── */
+.typeBadge,
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.typeCredit  { background: var(--color-success-bg); color: var(--color-success); }
+.typeDebit   { background: #09398012; color: var(--navy); }
+
+.statusCompleted { background: var(--color-success-bg); color: var(--color-success); }
+.statusFailed    { background: var(--color-danger-bg);  color: var(--color-danger);  }
+.statusPending   { background: var(--color-warning-bg); color: var(--color-warning); }
+
+/* ── Tear-line divider ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 1.25rem;
+  position: relative;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-border) 0,
+    var(--color-border) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.dividerDot {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+  margin: 0 -0.625rem;
+  z-index: 1;
+}
+
+/* ── Detail rows ── */
+.details {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.detailRow:last-child { border-bottom: none; }
+
+.detailLabel {
+  font-size: 0.8125rem;
+  color: var(--gray-text);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 7rem;
+}
+
+.detailValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: right;
+  word-break: break-all;
+}
+
+.mono {
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Receipt footer ── */
+.receiptFooter {
+  font-size: 0.6875rem;
+  color: var(--gray-text);
+  text-align: center;
+  padding: 1rem 1.75rem 1.25rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
