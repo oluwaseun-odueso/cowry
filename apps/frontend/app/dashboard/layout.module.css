@@ -1,0 +1,101 @@
+.shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: oklch(0.97 0 0);
+}
+
+/* ── Top nav ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 3.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid oklch(0.922 0 0);
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navLogoMark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(8, 232, 222, 0.2);
+}
+
+.navLogoWord {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #093980;
+  letter-spacing: -0.03em;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #1873B9, #08E8DE);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  border: 1.5px solid oklch(0.922 0 0);
+  background: transparent;
+  color: #565656;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.logoutBtn:hover {
+  border-color: #093980;
+  color: #093980;
+}
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  padding: 2rem 1.5rem;
+}
+
+.content {
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+}
