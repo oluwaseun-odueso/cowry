@@ -44,7 +44,7 @@ export default function DepositPage({ params }: { params: Promise<{ id: string }
         amount: parsed,
         ...(description.trim() ? { description: description.trim() } : {}),
       });
-      setSuccess({ reference: data.transaction.reference, newBalance: data.account.balance });
+      setSuccess({ reference: data.transaction.reference, newBalance: data.balance });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Deposit failed. Please try again.");
     } finally {

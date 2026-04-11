@@ -56,7 +56,7 @@ export default function WithdrawPage({ params }: { params: Promise<{ id: string 
         amount: parseFloat(amount),
         ...(description.trim() ? { description: description.trim() } : {}),
       });
-      setSuccess({ reference: data.transaction.reference, newBalance: data.account.balance });
+      setSuccess({ reference: data.transaction.reference, newBalance: data.balance });
       setStage("success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Withdrawal failed. Please try again.");
