@@ -1,0 +1,276 @@
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Shim ── */
+.loadingShim {
+  height: 24rem;
+  border-radius: 1.25rem;
+  background: oklch(0.93 0 0);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Page header ── */
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.headerIcon {
+  color: var(--navy);
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.03em;
+}
+
+.pageSub {
+  font-size: 0.9375rem;
+  color: var(--gray-text);
+  margin-top: 0.2rem;
+}
+
+.adminBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.875rem;
+  border-radius: 9999px;
+  background: #09398012;
+  color: var(--navy);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  padding: 0.25rem;
+  width: fit-content;
+}
+
+.tab {
+  padding: 0.5rem 1.375rem;
+  border-radius: 0.625rem;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-text);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.tab:hover { color: var(--navy); }
+.tabActive { background: var(--navy); color: #fff; }
+
+/* ── Filters ── */
+.filters {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  height: 2.375rem;
+  padding: 0 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.8125rem;
+  color: var(--navy);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filterSelect:focus { border-color: var(--blue); }
+
+/* ── Error ── */
+.errorMsg {
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border, #fca5a5);
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+}
+
+/* ── Table wrapper (scrollable) ── */
+.tableWrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.auditWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  background: oklch(0.93 0 0);
+}
+
+.rowSkeleton {
+  height: 3.25rem;
+  margin: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table thead tr {
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  padding: 0.75rem 1.25rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray-text);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.875rem 1.25rem;
+  color: var(--navy);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background: var(--color-bg); }
+
+/* ── Cell helpers ── */
+.tdName  { font-weight: 700; white-space: nowrap; }
+.tdEmail { color: var(--gray-text); white-space: nowrap; }
+.tdDate  { white-space: nowrap; color: var(--gray-text); font-size: 0.75rem; }
+.tdCenter{ text-align: center; }
+.tdRule  { font-weight: 600; white-space: nowrap; }
+.tdDesc  { max-width: 18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tdIp    { font-family: ui-monospace, monospace; font-size: 0.75rem; white-space: nowrap; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badgeAdmin    { background: #09398012; color: var(--navy); }
+.badgeUser     { background: #1873B912; color: var(--blue); }
+.badgeActive   { background: var(--color-success-bg); color: var(--color-success); }
+.badgeSuspended{ background: var(--color-danger-bg);  color: var(--color-danger);  }
+.badgeLow      { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
+.badgeMed      { background: var(--color-risk-med-bg);  color: var(--color-risk-med);  }
+.badgeHigh     { background: var(--color-risk-high-bg); color: var(--color-risk-high); }
+
+/* ── Icon indicators ── */
+.iconOk { color: var(--color-success); display: block; margin: 0 auto; }
+.iconNo { color: var(--gray-text); display: block; text-align: center; }
+
+/* ── Resolve button ── */
+.resolveBtn {
+  height: 1.875rem;
+  padding: 0 0.875rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--navy);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.resolveBtn:hover:not(:disabled) { background: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success); }
+.resolveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Empty state ── */
+.emptyMsg {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--gray-text);
+  font-size: 0.875rem;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.pageBtn {
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--navy);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--blue); }
+.pageBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pageInfo {
+  font-size: 0.8125rem;
+  color: var(--gray-text);
+  font-weight: 600;
+}
