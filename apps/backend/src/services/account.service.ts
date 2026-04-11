@@ -1,0 +1,441 @@
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../config/database';
+import { AccountRepository } from '../models/account';
+import { TransactionRepository } from '../models/transaction';
+import { TransferRepository } from '../models/transfer';
+import { FraudAlertRepository } from '../models/fraudAlert';
+import {
+  Account,
+  AccountType,
+  BankAccountStatus,
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+  Transfer,
+  FraudRiskLevel,
+} from '@cowry/types';
+
+const DAILY_WITHDRAWAL_LIMIT = 5_000;
+const LARGE_TRANSACTION_THRESHOLD = 10_000;
+const HIGH_DAILY_VOLUME_THRESHOLD = 15_000;
+const RAPID_TX_COUNT = 5;
+const RAPID_TX_WINDOW_MINUTES = 10;
+const RAPID_TRANSFER_COUNT = 3;
+const RAPID_TRANSFER_WINDOW_MINUTES = 10;
+
+export class AccountService {
+  // ─── Reference Generation ────────────────────────────────────────────────
+
+  private generateReference(): string {
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const short = uuidv4().replace(/-/g, '').slice(0, 8).toUpperCase();
+    return `TXN-${date}-${short}`;
+  }
+
+  async createAccount(userId: string, type: AccountType, currency = 'GBP'): Promise<Account> {
+    const existing = await AccountRepository.findByUserId(userId);
+    const duplicate = existing.find(a => a.accountType === type);
+    if (duplicate) {
+      throw new Error(`You already have a ${type} account.`);
+    }
+    return AccountRepository.create({ userId, accountType: type, currency: currency.toUpperCase() });
+  }
+
+  async getAccounts(userId: string): Promise<Account[]> {
+    return AccountRepository.findByUserId(userId);
+  }
+
+  async getAccount(userId: string, accountId: string): Promise<Account> {
+    const account = await AccountRepository.findById(accountId);
+    if (!account) throw new Error('Account not found.');
+    if (account.userId !== userId) throw new Error('Account not found.');
+    return account;
+  }
+
+  async deposit(
+    userId: string,
+    accountId: string,
+    amount: number,
+    description?: string
+  ): Promise<{ transaction: Transaction; balance: number }> {
+    const account = await this.getAccount(userId, accountId);
+    if (account.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Account is suspended.');
+    }
+
+    const reference = this.generateReference();
+    const newBalance = account.balance + amount;
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [newBalance, accountId]
+      );
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'credit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), accountId, amount, account.currency, reference, description ?? null]
+      );
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+
+    const [rows] = await pool.execute<any[]>(
+      'SELECT * FROM transactions WHERE reference = ?',
+      [reference]
+    );
+    const tx = rows[0];
+
+    // Non-blocking fraud check
+    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.CREDIT).catch(() => {});
+
+    return {
+      transaction: {
+        id: tx.id,
+        accountId: tx.account_id,
+        type: tx.type,
+        amount: parseFloat(tx.amount),
+        currency: tx.currency,
+        reference: tx.reference,
+        description: tx.description ?? undefined,
+        status: tx.status,
+        createdAt: tx.created_at,
+      },
+      balance: newBalance,
+    };
+  }
+
+  async withdraw(
+    userId: string,
+    accountId: string,
+    amount: number,
+    description?: string
+  ): Promise<{ transaction: Transaction; balance: number }> {
+    const account = await this.getAccount(userId, accountId);
+    if (account.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Account is suspended.');
+    }
+    if (account.balance < amount) {
+      throw new Error('Insufficient funds.');
+    }
+
+    // Daily withdrawal limit check
+    const todayDebits = await TransactionRepository.sumDebitsForAccountToday(accountId);
+    if (todayDebits + amount > DAILY_WITHDRAWAL_LIMIT) {
+      throw new Error(
+        `Withdrawal would exceed daily limit of £${DAILY_WITHDRAWAL_LIMIT.toLocaleString()}.`
+      );
+    }
+
+    const reference = this.generateReference();
+    const newBalance = account.balance - amount;
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [newBalance, accountId]
+      );
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'debit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), accountId, amount, account.currency, reference, description ?? null]
+      );
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+
+    const [rows] = await pool.execute<any[]>(
+      'SELECT * FROM transactions WHERE reference = ?',
+      [reference]
+    );
+    const tx = rows[0];
+
+    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.DEBIT).catch(() => {});
+
+    return {
+      transaction: {
+        id: tx.id,
+        accountId: tx.account_id,
+        type: tx.type,
+        amount: parseFloat(tx.amount),
+        currency: tx.currency,
+        reference: tx.reference,
+        description: tx.description ?? undefined,
+        status: tx.status,
+        createdAt: tx.created_at,
+      },
+      balance: newBalance,
+    };
+  }
+
+  async transfer(
+    userId: string,
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+    description?: string
+  ): Promise<{ transfer: Transfer; balance: number }> {
+    if (fromAccountId === toAccountId) {
+      throw new Error('Cannot transfer to the same account.');
+    }
+
+    const fromAccount = await this.getAccount(userId, fromAccountId);
+    if (fromAccount.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Source account is suspended.');
+    }
+    if (fromAccount.balance < amount) {
+      throw new Error('Insufficient funds.');
+    }
+
+    const toAccount = await AccountRepository.findById(toAccountId);
+    if (!toAccount) throw new Error('Destination account not found.');
+    if (toAccount.status !== BankAccountStatus.ACTIVE) {
+      throw new Error('Destination account is suspended.');
+    }
+    if (fromAccount.currency !== toAccount.currency) {
+      throw new Error('Currency mismatch between accounts.');
+    }
+
+    const reference = this.generateReference();
+    const debitRef = this.generateReference();
+    const creditRef = this.generateReference();
+
+    const conn = await pool.getConnection();
+    let transferId: string;
+    try {
+      await conn.beginTransaction();
+
+      // Debit source
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [fromAccount.balance - amount, fromAccountId]
+      );
+      // Credit destination
+      await conn.execute(
+        'UPDATE accounts SET balance = ? WHERE id = ?',
+        [toAccount.balance + amount, toAccountId]
+      );
+      // Debit transaction record
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'debit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), fromAccountId, amount, fromAccount.currency, debitRef, description ?? null]
+      );
+      // Credit transaction record
+      await conn.execute(
+        `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+         VALUES (?, ?, 'credit', ?, ?, ?, ?, 'completed')`,
+        [uuidv4(), toAccountId, amount, toAccount.currency, creditRef, description ?? null]
+      );
+      // Transfer record
+      transferId = uuidv4();
+      await conn.execute(
+        `INSERT INTO transfers (id, from_account_id, to_account_id, amount, currency, reference, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'completed')`,
+        [transferId, fromAccountId, toAccountId, amount, fromAccount.currency, reference]
+      );
+
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+
+    this.runTransferFraudChecks(userId, fromAccountId, toAccountId, amount).catch(() => {});
+
+    return {
+      transfer: (await TransferRepository.findById(transferId!))!,
+      balance: fromAccount.balance - amount,
+    };
+  }
+
+  async getTransactions(
+    userId: string,
+    accountId: string,
+    options?: {
+      type?: TransactionType;
+      from?: Date;
+      to?: Date;
+      minAmount?: number;
+      maxAmount?: number;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ transactions: Transaction[]; total: number; page: number; limit: number }> {
+    await this.getAccount(userId, accountId); // ownership check
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const result = await TransactionRepository.findByAccountId(accountId, { ...options, page, limit });
+    return { ...result, page, limit };
+  }
+
+  async getTransaction(userId: string, transactionId: string): Promise<Transaction> {
+    const tx = await TransactionRepository.findById(transactionId);
+    if (!tx) throw new Error('Transaction not found.');
+    // Verify the account belongs to the user
+    const account = await AccountRepository.findById(tx.accountId);
+    if (!account || account.userId !== userId) throw new Error('Transaction not found.');
+    return tx;
+  }
+
+  async getStatement(
+    userId: string,
+    accountId: string,
+    from: Date,
+    to: Date
+  ): Promise<{
+    account: Account;
+    openingBalance: number;
+    transactions: Transaction[];
+    closingBalance: number;
+    period: { from: Date; to: Date };
+  }> {
+    const account = await this.getAccount(userId, accountId);
+
+    // All transactions for this account in period
+    const { transactions } = await TransactionRepository.findByAccountId(accountId, {
+      from,
+      to,
+      page: 1,
+      limit: 1000,
+    });
+
+    // Sort oldest-first for statement
+    const sorted = [...transactions].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
+
+    // Reconstruct opening balance by working backwards from current balance
+    // For all transactions AFTER the period end, reverse their effect
+    const allTx = await TransactionRepository.findByAccountId(accountId, { page: 1, limit: 10000 });
+    let closingBalance = account.balance;
+    for (const tx of allTx.transactions) {
+      if (tx.createdAt > to) {
+        closingBalance += tx.type === TransactionType.CREDIT ? -tx.amount : tx.amount;
+      }
+    }
+
+    let openingBalance = closingBalance;
+    for (const tx of sorted) {
+      openingBalance += tx.type === TransactionType.CREDIT ? -tx.amount : tx.amount;
+    }
+
+    return {
+      account,
+      openingBalance: Math.round(openingBalance * 100) / 100,
+      transactions: sorted,
+      closingBalance: Math.round(closingBalance * 100) / 100,
+      period: { from, to },
+    };
+  }
+
+  private async runTransactionFraudChecks(
+    userId: string,
+    accountId: string,
+    amount: number,
+    type: TransactionType
+  ): Promise<void> {
+    const dummyIp = '0.0.0.0';
+
+    // Rule 1: Large transaction
+    if (amount > LARGE_TRANSACTION_THRESHOLD) {
+      await FraudAlertRepository.create({
+        userId,
+        ruleName: 'large_transaction',
+        riskLevel: FraudRiskLevel.HIGH,
+        description: `${type === TransactionType.CREDIT ? 'Deposit' : 'Withdrawal'} of £${amount.toFixed(2)} exceeds large transaction threshold.`,
+        ipAddress: dummyIp,
+        metadata: { accountId, amount, type },
+        action: 'alert',
+      });
+    }
+
+    // Rule 2: Rapid transactions
+    const recentTx = await TransactionRepository.findRecentByAccountId(
+      accountId,
+      RAPID_TX_WINDOW_MINUTES,
+      RAPID_TX_COUNT + 1
+    );
+    if (recentTx.length > RAPID_TX_COUNT) {
+      await FraudAlertRepository.create({
+        userId,
+        ruleName: 'rapid_transactions',
+        riskLevel: FraudRiskLevel.MEDIUM,
+        description: `More than ${RAPID_TX_COUNT} transactions on account ${accountId} within ${RAPID_TX_WINDOW_MINUTES} minutes.`,
+        ipAddress: dummyIp,
+        metadata: { accountId, count: recentTx.length },
+        action: 'alert',
+      });
+    }
+
+    // Rule 3: High daily debit volume
+    if (type === TransactionType.DEBIT) {
+      const dailyDebits = await TransactionRepository.sumDebitsForAccountToday(accountId);
+      if (dailyDebits > HIGH_DAILY_VOLUME_THRESHOLD) {
+        await FraudAlertRepository.create({
+          userId,
+          ruleName: 'high_daily_debit_volume',
+          riskLevel: FraudRiskLevel.MEDIUM,
+          description: `Total daily debits of £${dailyDebits.toFixed(2)} exceed threshold of £${HIGH_DAILY_VOLUME_THRESHOLD}.`,
+          ipAddress: dummyIp,
+          metadata: { accountId, dailyDebits },
+          action: 'alert',
+        });
+      }
+    }
+  }
+
+  private async runTransferFraudChecks(
+    userId: string,
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number
+  ): Promise<void> {
+    const dummyIp = '0.0.0.0';
+
+    // Rule 4: New payee
+    const isNewPayee = !(await TransferRepository.hasTransferredToAccount(fromAccountId, toAccountId));
+    if (isNewPayee) {
+      await FraudAlertRepository.create({
+        userId,
+        ruleName: 'new_payee_transfer',
+        riskLevel: FraudRiskLevel.LOW,
+        description: `First transfer from account ${fromAccountId} to account ${toAccountId}.`,
+        ipAddress: dummyIp,
+        metadata: { fromAccountId, toAccountId, amount },
+        action: 'log',
+      });
+    }
+
+    // Rule 5: Rapid transfers
+    const recentCount = await TransferRepository.countRecentFromAccount(
+      fromAccountId,
+      RAPID_TRANSFER_WINDOW_MINUTES
+    );
+    if (recentCount > RAPID_TRANSFER_COUNT) {
+      await FraudAlertRepository.create({
+        userId,
+        ruleName: 'rapid_transfers',
+        riskLevel: FraudRiskLevel.MEDIUM,
+        description: `${recentCount} transfers from account ${fromAccountId} within ${RAPID_TRANSFER_WINDOW_MINUTES} minutes.`,
+        ipAddress: dummyIp,
+        metadata: { fromAccountId, count: recentCount },
+        action: 'alert',
+      });
+    }
+  }
+}
