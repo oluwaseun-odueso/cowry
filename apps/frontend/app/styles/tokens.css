@@ -1,0 +1,176 @@
+/*
+ * Cowry design tokens
+ * Import this in any CSS module: @import "@/app/styles/tokens.css";
+ *
+ * All brand colors, shared animations, and reusable patterns live here.
+ * Never hardcode #093980 / #1873B9 / #08E8DE in page-level CSS — use these vars.
+ */
+
+/* ── Brand palette ── */
+:root {
+  --navy:       #093980;   /* primary dark blue — headings, active states */
+  --blue:       #1873B9;   /* mid blue — gradient start */
+  --teal:       #08E8DE;   /* accent cyan — gradient end, focus rings */
+  --gray-text:  #565656;   /* body / secondary text */
+
+  /* Semantic aliases */
+  --color-primary:     var(--navy);
+  --color-accent:      var(--teal);
+  --color-text:        var(--navy);
+  --color-subtext:     var(--gray-text);
+  --color-border:      oklch(0.922 0 0);
+  --color-surface:     #ffffff;
+  --color-bg:          oklch(0.97 0 0);
+
+  /* Status colors */
+  --color-success:     #0891b2;
+  --color-success-bg:  #08E8DE12;
+  --color-danger:      #dc2626;
+  --color-danger-bg:   rgba(239, 68, 68, 0.08);
+  --color-danger-border: rgba(239, 68, 68, 0.25);
+  --color-warning:     #d97706;
+  --color-warning-bg:  rgba(217, 119, 6, 0.1);
+
+  /* Risk level colors */
+  --color-risk-low:    #0891b2;
+  --color-risk-low-bg: #08E8DE15;
+  --color-risk-med:    #d97706;
+  --color-risk-med-bg: rgba(217, 119, 6, 0.12);
+  --color-risk-high:   #dc2626;
+  --color-risk-high-bg: rgba(239, 68, 68, 0.12);
+
+  /* Gradient */
+  --gradient-brand: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
+  --gradient-aurora:
+    radial-gradient(ellipse 120% 55% at 110% -5%,  rgba(8, 232, 222, 0.13) 0%, transparent 55%),
+    radial-gradient(ellipse 80%  90% at -10% 110%, rgba(24, 115, 185, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 60%  60% at 50%  -20%, rgba(24, 115, 185, 0.08) 0%, transparent 60%),
+    #07306e;
+
+  /* Shadows */
+  --shadow-card:    0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-btn:     0 4px 20px rgba(8, 232, 222, 0.18);
+  --shadow-btn-hover: 0 8px 28px rgba(8, 232, 222, 0.28);
+}
+
+/* ── Shared keyframes ── */
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes line-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Reusable utility classes ── */
+
+/* Primary gradient button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  background: var(--gradient-brand);
+  border: none;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: var(--shadow-btn);
+}
+.btn-primary:hover  { transform: translateY(-1px); box-shadow: var(--shadow-btn-hover); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Ghost / secondary button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--gray-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+
+/* Destructive button */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-danger-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.14); }
+
+/* Standard card */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: oklch(0.93 0 0);
+  border-radius: 0.75rem;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* Status / type badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.badge-active   { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
+.badge-suspended{ background: var(--color-risk-high-bg); color: var(--color-risk-high); }
+.badge-credit   { background: var(--color-success-bg);   color: var(--color-success);   }
+.badge-debit    { background: #09398012;                  color: var(--navy);            }
+.badge-low      { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
+.badge-medium   { background: var(--color-risk-med-bg);  color: var(--color-risk-med);  }
+.badge-high     { background: var(--color-risk-high-bg); color: var(--color-risk-high); }
+.badge-admin    { background: #09398018;                  color: var(--navy);            }
+.badge-user     { background: oklch(0.95 0 0);            color: var(--gray-text);       }
