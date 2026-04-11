@@ -1,0 +1,51 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.mark {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(8, 232, 222, 0.25);
+}
+
+.markLetter {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.wordmark {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.wordmarkDark {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #093980;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.tagline {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #08E8DE;
+  margin-top: -0.25rem;
+}
