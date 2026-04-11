@@ -60,7 +60,7 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
         amount: parseFloat(amount),
         ...(description.trim() ? { description: description.trim() } : {}),
       });
-      setSuccess({ reference: data.transfer.reference, newBalance: data.fromAccount.balance });
+      setSuccess({ reference: data.transfer.reference, newBalance: data.balance });
       setStage("success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Transfer failed. Please try again.");
