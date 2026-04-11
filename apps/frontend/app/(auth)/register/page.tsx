@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { CowryLogo } from "@/components/cowry-logo";
 import { api, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import styles from "./page.module.css";
 
 const INITIAL = { firstName: "", lastName: "", email: "", phoneNumber: "", password: "" };
@@ -13,6 +14,7 @@ type FieldKey = keyof typeof INITIAL;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [form, setForm] = useState(INITIAL);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -24,8 +26,26 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await api.auth.register(form);
-      router.push("/login?registered=1");
+      const res = await api.auth.register(form);
+
+      if (res.data.accessToken) {
+        // Store token so the accounts.create call can authenticate
+        localStorage.setItem("accessToken", res.data.accessToken);
+
+        // Auto-create a savings account for every new user
+        try {
+          await api.accounts.create({ type: "savings" });
+        } catch (accountErr) {
+          console.error("Auto account creation failed:", accountErr);
+        }
+
+        // Log the user in and redirect straight to the dashboard
+        login(
+          { accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "" },
+          res.data.user,
+        );
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
