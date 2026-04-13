@@ -126,10 +126,6 @@ export default function ProfilePage() {
                 : <span className={styles.statusWarn}><Shield size={15} /> Disabled</span>}
             </span>
           </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>User ID</span>
-            <span className={`${styles.rowValue} ${styles.mono}`}>{user.id}</span>
-          </div>
         </div>
       </div>
     </div>

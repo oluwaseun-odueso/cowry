@@ -123,7 +123,7 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
     setLoading(true); setError("");
     try {
       const { data } = await api.auth.setupMfa();
-      setQrUrl(data.qrCodeUrl);
+      setQrUrl(data.otpauthUrl);
       setSecret(data.secret);
       setStep("setup");
     } catch (err: unknown) {

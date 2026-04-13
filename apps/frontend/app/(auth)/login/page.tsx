@@ -27,7 +27,7 @@ export default function LoginPage() {
         return;
       }
       if (res.data.accessToken) {
-        login({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "" }, res.data.user);
+        login({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "", expiresIn: res.data.expiresIn }, res.data.user);
         router.push("/dashboard");
       }
     } catch (err) {
