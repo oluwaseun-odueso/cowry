@@ -16,7 +16,47 @@ function getToken(): string | null {
   return localStorage.getItem("accessToken");
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+// ─── Token refresh ────────────────────────────────────────────────
+
+// Coalesces parallel 401s so only one refresh request is in-flight at a time.
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) throw new Error("No refresh token");
+
+    const res = await fetch(`${BASE_URL}/auth/refresh-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) throw new Error("Refresh failed");
+
+    const { data } = await res.json();
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    // Keep the JS-readable cookie in sync for Next.js middleware
+    document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax`;
+    return data.accessToken as string;
+  })().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
+function clearSession() {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
+}
+
+// ─── Core request ─────────────────────────────────────────────────
+
+async function request<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
   const token = getToken();
 
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -29,7 +69,24 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     },
   });
 
+  // Proactive: backend warns us the token is about to expire — refresh silently in background
+  if (res.ok && res.headers.get("X-Token-Expiring") === "true") {
+    refreshAccessToken().catch(() => {/* ignore — next 401 will handle it */});
+  }
+
   const data = await res.json().catch(() => ({ message: "Unexpected error" }));
+
+  // Reactive: on 401, attempt one token refresh then retry the original request
+  if (res.status === 401 && !isRetry) {
+    try {
+      await refreshAccessToken();
+    } catch {
+      clearSession();
+      if (typeof window !== "undefined") window.location.href = "/login";
+      throw new ApiError(401, "Session expired. Please log in again.");
+    }
+    return request<T>(path, options, true);
+  }
 
   if (!res.ok) {
     throw new ApiError(res.status, data.message ?? "Request failed");
@@ -122,6 +179,7 @@ export interface Pagination {
 interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  expiresIn?: number;
 }
 
 interface AuthResponse {
