@@ -26,7 +26,7 @@
 
 .brand { display: flex; flex-direction: column; align-items: center; animation: reveal 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 
-.accent { display: block; width: 2.5rem; height: 2px; background: linear-gradient(90deg, #1873B9, #08E8DE); border-radius: 9999px; margin-top: 1rem; transform-origin: left; animation: line-grow 0.6s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+.accent { display: block; width: 2.5rem; height: 2px; background: linear-gradient(90deg, #252B65, #B7D5FF); border-radius: 9999px; margin-top: 1rem; transform-origin: left; animation: line-grow 0.6s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
 
 .state { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; animation: fade-in 0.4s ease both; }
 
@@ -36,8 +36,8 @@
   animation: pop-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-.ringPending { composes: ring; background: rgba(24,115,185,0.15); border: 1.5px solid rgba(24,115,185,0.35); color: #1873B9; }
-.ringSuccess { composes: ring; background: rgba(8,232,222,0.12); border: 1.5px solid rgba(8,232,222,0.35); color: #08E8DE; }
+.ringPending { composes: ring; background: rgba(24,115,185,0.15); border: 1.5px solid rgba(24,115,185,0.35); color: #252B65; }
+.ringSuccess { composes: ring; background: rgba(8,232,222,0.12); border: 1.5px solid rgba(8,232,222,0.35); color: #B7D5FF; }
 .ringError   { composes: ring; background: rgba(239,68,68,0.12); border: 1.5px solid rgba(239,68,68,0.3); color: #fca5a5; }
 
 .spinner { animation: spin 1s linear infinite; }
@@ -46,5 +46,5 @@
 
 .stateText { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.6; max-width: 18rem; }
 
-.btn { height: 3.25rem; width: 100%; max-width: 16rem; border-radius: 9999px; background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%); color: #ffffff; font-size: 0.9375rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(8,232,222,0.18); transition: transform 0.15s, box-shadow 0.2s; margin-top: 0.5rem; }
-.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(8,232,222,0.28); }
+.btn { height: 3.25rem; width: 100%; max-width: 16rem; border-radius: 9999px; background: #252B65; color: #ffffff; font-size: 0.9375rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(37,43,101,0.35); transition: transform 0.15s, box-shadow 0.2s; margin-top: 0.5rem; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(37,43,101,0.5); }

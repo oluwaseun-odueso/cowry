@@ -31,7 +31,7 @@
   display: block;
   width: 2.5rem;
   height: 2px;
-  background: linear-gradient(90deg, #1873B9, #08E8DE);
+  background: linear-gradient(90deg, #252B65, #B7D5FF);
   border-radius: 9999px;
   margin-top: 1rem;
   transform-origin: left;
@@ -54,21 +54,21 @@
   border-bottom: 1.5px solid rgba(255,255,255,0.18);
   border-radius: 0; padding: 0.75rem 0;
   color: #ffffff; font-size: 0.9375rem; font-family: inherit; font-weight: 500;
-  outline: none; transition: border-bottom-color 0.2s ease; caret-color: #08E8DE;
+  outline: none; transition: border-bottom-color 0.2s ease; caret-color: #B7D5FF;
 }
 .input::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; }
-.input:focus { border-bottom-color: #08E8DE; }
+.input:focus { border-bottom-color: #B7D5FF; }
 
 .error { padding: 0.875rem 1rem; border-radius: 0.875rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); font-size: 0.8125rem; color: #fca5a5; line-height: 1.4; }
 
 .submitBtn {
   height: 3.25rem; width: 100%; border-radius: 9999px;
-  background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
+  background: #252B65;
   border: none; color: #ffffff; font-size: 0.9375rem; font-weight: 700; font-family: inherit;
   letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px rgba(8,232,222,0.18); transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(37,43,101,0.35); transition: transform 0.15s, box-shadow 0.2s;
 }
-.submitBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(8,232,222,0.28); }
+.submitBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(37,43,101,0.5); }
 .submitBtn:active { transform: scale(0.98) translateY(0); }
 .submitBtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -79,7 +79,7 @@
   width: 4.5rem; height: 4.5rem; border-radius: 9999px;
   background: linear-gradient(135deg, rgba(24,115,185,0.15), rgba(8,232,222,0.15));
   border: 1.5px solid rgba(8,232,222,0.35);
-  display: flex; align-items: center; justify-content: center; color: #08E8DE;
+  display: flex; align-items: center; justify-content: center; color: #B7D5FF;
   animation: pop-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
