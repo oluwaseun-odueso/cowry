@@ -1,15 +1,132 @@
+/* ══════════════════════════════════════════════════
+   Auth layout — split-screen
+   Mobile: full-screen dark gradient (form only)
+   Desktop ≥768px: 42% brand panel | 58% form panel
+   ══════════════════════════════════════════════════ */
+
 .root {
   min-height: 100svh;
   width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.25rem;
-
+  flex-direction: column;
   background: linear-gradient(160deg, #23164D 0%, #08182F 100%);
 }
 
-.content {
-  width: 100%;
-  max-width: 22rem;
+/* ── Brand panel (desktop only) ── */
+.brandPanel {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .root {
+    flex-direction: row;
+    background: #ffffff;
+  }
+
+  .brandPanel {
+    display: flex;
+    flex-direction: column;
+    width: 42%;
+    min-height: 100svh;
+    background: linear-gradient(160deg, #23164D 0%, #08182F 100%);
+    padding: 2.75rem 3rem;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+}
+
+.brandTop {
+  position: relative;
+  z-index: 2;
+}
+
+.brandIllustration {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  padding: 2rem 0;
+}
+
+.brandIllustrationImg {
+  object-fit: contain;
+  animation: float 6s ease-in-out infinite;
+  filter: drop-shadow(0 24px 40px rgba(8, 24, 47, 0.4));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-16px); }
+}
+
+/* Trust list */
+.trustList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  position: relative;
+  z-index: 2;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(183, 213, 255, 0.75);
+  line-height: 1.4;
+}
+
+.trustItem::before {
+  content: "✓";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  background: rgba(183, 213, 255, 0.1);
+  border: 1px solid rgba(183, 213, 255, 0.25);
+  font-size: 0.6875rem;
+  color: #B7D5FF;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+/* Decorative radial glow */
+.brandGlow {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(183, 213, 255, 0.09) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Form panel ── */
+.formPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 2.5rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .formPanel {
+    background: #ffffff;
+    padding: 3rem 4rem;
+    align-items: center;
+  }
 }
