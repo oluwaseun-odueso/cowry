@@ -56,6 +56,25 @@
   --shadow-card-lg:   0 8px 32px rgba(35, 22, 77, 0.12);
   --shadow-btn:       0 4px 20px rgba(37, 43, 101, 0.3);
   --shadow-btn-hover: 0 8px 28px rgba(37, 43, 101, 0.4);
+
+  /* Glow / depth */
+  --glow-purple:      0 0 60px rgba(35, 22, 77, 0.35);
+  --glow-blue:        0 0 40px rgba(183, 213, 255, 0.25);
+
+  /* Glass surfaces */
+  --glass-bg:         rgba(255, 255, 255, 0.06);
+  --glass-border:     rgba(255, 255, 255, 0.12);
+
+  /* Sidebar */
+  --sidebar-bg:       linear-gradient(180deg, #23164D 0%, #1a1040 100%);
+
+  /* Trust / success green */
+  --color-trust:      #059669;
+  --color-trust-bg:   rgba(5, 150, 105, 0.1);
+  --color-trust-border: rgba(5, 150, 105, 0.3);
+
+  /* Section spacing */
+  --space-section: 6rem;
 }
 
 /* ── Shared keyframes ── */
@@ -82,6 +101,37 @@
 @keyframes float-delayed {
   0%, 100% { transform: translateY(0px) rotate(2deg); }
   50%       { transform: translateY(-14px) rotate(2deg); }
+}
+
+@keyframes shimmer-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(183, 213, 255, 0.5); }
+  70%  { box-shadow: 0 0 0 12px rgba(183, 213, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(183, 213, 255, 0); }
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes success-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Reusable utility classes ── */
