@@ -69,15 +69,10 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       <div className={styles.receipt}>
         {/* Amount hero */}
         <div className={styles.receiptHero}>
-          <div
-            className={styles.typeIcon}
-            style={isCredit
-              ? { background: "var(--color-success-bg)", color: "var(--color-success)" }
-              : { background: "#09398012", color: "var(--navy)" }}
-          >
+          <div className={`${styles.typeIcon} ${isCredit ? styles.iconCredit : styles.iconDebit}`}>
             {isCredit ? <ArrowDownLeft size={28} /> : <ArrowUpRight size={28} />}
           </div>
-          <p className={styles.amountHero} style={{ color: isCredit ? "var(--color-success)" : "var(--navy)" }}>
+          <p className={`${styles.amountHero} ${isCredit ? styles.amountCredit : styles.amountDebit}`}>
             {isCredit ? "+" : "−"}{fmt(tx.amount, currency)}
           </p>
           <div className={styles.badgeRow}>
