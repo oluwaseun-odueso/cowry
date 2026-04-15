@@ -12,6 +12,19 @@ import styles from "./page.module.css";
 const INITIAL = { firstName: "", lastName: "", email: "", phoneNumber: "", password: "" };
 type FieldKey = keyof typeof INITIAL;
 
+const STRENGTH_COLORS = ["#dc2626", "#d97706", "#0891b2", "#059669"];
+const STRENGTH_LABELS = ["Weak", "Fair", "Good", "Strong"];
+
+function strengthScore(pw: string): number {
+  if (pw.length === 0) return -1;
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return Math.min(3, score - (score === 4 ? 0 : 0));
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -22,6 +35,8 @@ export default function RegisterPage() {
 
   const set = (key: FieldKey, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
+  const strength = strengthScore(form.password);
+
   async function handleSubmit() {
     setError("");
     setLoading(true);
@@ -29,17 +44,14 @@ export default function RegisterPage() {
       const res = await api.auth.register(form);
 
       if (res.data.accessToken) {
-        // Store token so the accounts.create call can authenticate
         localStorage.setItem("accessToken", res.data.accessToken);
 
-        // Auto-create a savings account for every new user
         try {
           await api.accounts.create({ type: "savings" });
         } catch (accountErr) {
           console.error("Auto account creation failed:", accountErr);
         }
 
-        // Log the user in and redirect straight to the dashboard
         login(
           { accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "" },
           res.data.user,
@@ -61,8 +73,8 @@ export default function RegisterPage() {
       </div>
 
       <div className={styles.heading}>
-        <h1 className={styles.title}>Create account.</h1>
-        <p className={styles.subtitle}>Start your Cowry journey today</p>
+        <h1 className={styles.title}>Create your account.</h1>
+        <p className={styles.subtitle}>Join Cowry — no paperwork, no branches.</p>
       </div>
 
       <form
@@ -110,6 +122,23 @@ export default function RegisterPage() {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          {/* Strength bar */}
+          {form.password.length > 0 && (
+            <div className={styles.strengthRow}>
+              <div className={styles.strengthBar}>
+                <div
+                  className={styles.strengthFill}
+                  style={{
+                    width: `${(strength + 1) * 25}%`,
+                    background: STRENGTH_COLORS[strength],
+                  }}
+                />
+              </div>
+              <span className={styles.strengthLabel} style={{ color: STRENGTH_COLORS[strength] }}>
+                {STRENGTH_LABELS[strength]}
+              </span>
+            </div>
+          )}
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
