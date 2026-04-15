@@ -162,12 +162,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             ) : (
               txs.map((tx) => (
                 <Link key={tx.id} href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
-                  <div
-                    className={styles.txIcon}
-                    style={tx.type === "credit"
-                      ? { background: "var(--color-success-bg)", color: "var(--color-success)" }
-                      : { background: "#09398012", color: "var(--navy)" }}
-                  >
+                  <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
                     {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
                   </div>
                   <div className={styles.txInfo}>
@@ -176,7 +171,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     <p className={styles.txDate}>{fmtDate(tx.createdAt)}</p>
                   </div>
                   <div className={styles.txRight}>
-                    <p className={styles.txAmount} style={{ color: tx.type === "credit" ? "var(--color-success)" : "var(--navy)" }}>
+                    <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
                       {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, account.currency)}
                     </p>
                     <span className={`${styles.statusBadge} ${tx.status === "completed" ? styles.statusCompleted : tx.status === "failed" ? styles.statusFailed : styles.statusPending}`}>
