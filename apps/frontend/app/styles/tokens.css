@@ -3,54 +3,59 @@
  * Import this in any CSS module: @import "@/app/styles/tokens.css";
  *
  * All brand colors, shared animations, and reusable patterns live here.
- * Never hardcode #093980 / #1873B9 / #08E8DE in page-level CSS — use these vars.
+ * Never hardcode raw hex in page-level CSS — use these vars.
  */
 
 /* ── Brand palette ── */
 :root {
-  --navy:       #093980;   /* primary dark blue — headings, active states */
-  --blue:       #1873B9;   /* mid blue — gradient start */
-  --teal:       #08E8DE;   /* accent cyan — gradient end, focus rings */
-  --gray-text:  #565656;   /* body / secondary text */
+  --purple:       #23164D;   /* primary dark — sidebar, headings, active states */
+  --dark-blue:    #08182F;   /* deepest background (hero bottom) */
+  --light-blue:   #B7D5FF;   /* accent — highlights, active nav text, focus rings */
+  --peach:        #FD6B52;   /* warm CTA accent, destructive-light */
+  --card-border:  #F3F3F3;   /* all card / section borders */
+  --signup-btn:   #252B65;   /* Sign Up button background */
+  --gray-text:    #6B7280;   /* body / secondary text */
+
+  /* Legacy aliases kept so existing var() refs keep working */
+  --navy:      var(--purple);
+  --blue:      var(--signup-btn);
+  --teal:      var(--light-blue);
 
   /* Semantic aliases */
-  --color-primary:     var(--navy);
-  --color-accent:      var(--teal);
-  --color-text:        var(--navy);
-  --color-subtext:     var(--gray-text);
-  --color-border:      oklch(0.922 0 0);
-  --color-surface:     #ffffff;
-  --color-bg:          oklch(0.97 0 0);
+  --color-primary:    var(--purple);
+  --color-accent:     var(--light-blue);
+  --color-text:       var(--purple);
+  --color-subtext:    var(--gray-text);
+  --color-border:     var(--card-border);
+  --color-surface:    #ffffff;
+  --color-bg:         #F9F9FB;
 
   /* Status colors */
-  --color-success:     #0891b2;
-  --color-success-bg:  #08E8DE12;
-  --color-danger:      #dc2626;
-  --color-danger-bg:   rgba(239, 68, 68, 0.08);
+  --color-success:       #0891b2;
+  --color-success-bg:    rgba(8, 145, 178, 0.1);
+  --color-danger:        #dc2626;
+  --color-danger-bg:     rgba(239, 68, 68, 0.08);
   --color-danger-border: rgba(239, 68, 68, 0.25);
-  --color-warning:     #d97706;
-  --color-warning-bg:  rgba(217, 119, 6, 0.1);
+  --color-warning:       #d97706;
+  --color-warning-bg:    rgba(217, 119, 6, 0.1);
 
   /* Risk level colors */
-  --color-risk-low:    #0891b2;
-  --color-risk-low-bg: #08E8DE15;
-  --color-risk-med:    #d97706;
-  --color-risk-med-bg: rgba(217, 119, 6, 0.12);
-  --color-risk-high:   #dc2626;
+  --color-risk-low:     #0891b2;
+  --color-risk-low-bg:  rgba(8, 145, 178, 0.1);
+  --color-risk-med:     #d97706;
+  --color-risk-med-bg:  rgba(217, 119, 6, 0.12);
+  --color-risk-high:    #dc2626;
   --color-risk-high-bg: rgba(239, 68, 68, 0.12);
 
-  /* Gradient */
-  --gradient-brand: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
-  --gradient-aurora:
-    radial-gradient(ellipse 120% 55% at 110% -5%,  rgba(8, 232, 222, 0.13) 0%, transparent 55%),
-    radial-gradient(ellipse 80%  90% at -10% 110%, rgba(24, 115, 185, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 60%  60% at 50%  -20%, rgba(24, 115, 185, 0.08) 0%, transparent 60%),
-    #07306e;
+  /* Gradients */
+  --gradient-hero:  linear-gradient(160deg, #23164D 0%, #08182F 100%);
+  --gradient-brand: linear-gradient(135deg, #23164D 0%, #252B65 100%);
 
   /* Shadows */
-  --shadow-card:    0 1px 4px rgba(0, 0, 0, 0.04);
-  --shadow-btn:     0 4px 20px rgba(8, 232, 222, 0.18);
-  --shadow-btn-hover: 0 8px 28px rgba(8, 232, 222, 0.28);
+  --shadow-card:      0 2px 12px rgba(35, 22, 77, 0.07);
+  --shadow-card-lg:   0 8px 32px rgba(35, 22, 77, 0.12);
+  --shadow-btn:       0 4px 20px rgba(37, 43, 101, 0.3);
+  --shadow-btn-hover: 0 8px 28px rgba(37, 43, 101, 0.4);
 }
 
 /* ── Shared keyframes ── */
@@ -69,6 +74,16 @@
   50%       { opacity: 0.45; }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50%       { transform: translateY(-18px) rotate(-2deg); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px) rotate(2deg); }
+  50%       { transform: translateY(-14px) rotate(2deg); }
+}
+
 /* ── Reusable utility classes ── */
 
 /* Primary gradient button */
@@ -80,7 +95,7 @@
   height: 2.75rem;
   padding: 0 1.5rem;
   border-radius: 9999px;
-  background: var(--gradient-brand);
+  background: var(--signup-btn);
   border: none;
   color: #ffffff;
   font-size: 0.9375rem;
@@ -89,10 +104,10 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.15s, box-shadow 0.2s;
+  transition: transform 0.15s, box-shadow 0.2s, background 0.15s;
   box-shadow: var(--shadow-btn);
 }
-.btn-primary:hover  { transform: translateY(-1px); box-shadow: var(--shadow-btn-hover); }
+.btn-primary:hover  { background: var(--purple); transform: translateY(-1px); box-shadow: var(--shadow-btn-hover); }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -115,7 +130,7 @@
   text-decoration: none;
   transition: border-color 0.15s, color 0.15s;
 }
-.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+.btn-ghost:hover { border-color: var(--purple); color: var(--purple); }
 
 /* Destructive button */
 .btn-danger {
@@ -141,7 +156,7 @@
 /* Standard card */
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--card-border);
   border-radius: 1rem;
   box-shadow: var(--shadow-card);
 }
@@ -165,12 +180,12 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.badge-active   { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
-.badge-suspended{ background: var(--color-risk-high-bg); color: var(--color-risk-high); }
-.badge-credit   { background: var(--color-success-bg);   color: var(--color-success);   }
-.badge-debit    { background: #09398012;                  color: var(--navy);            }
-.badge-low      { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
-.badge-medium   { background: var(--color-risk-med-bg);  color: var(--color-risk-med);  }
-.badge-high     { background: var(--color-risk-high-bg); color: var(--color-risk-high); }
-.badge-admin    { background: #09398018;                  color: var(--navy);            }
-.badge-user     { background: oklch(0.95 0 0);            color: var(--gray-text);       }
+.badge-active    { background: var(--color-risk-low-bg);   color: var(--color-risk-low);  }
+.badge-suspended { background: var(--color-risk-high-bg);  color: var(--color-risk-high); }
+.badge-credit    { background: var(--color-success-bg);    color: var(--color-success);   }
+.badge-debit     { background: rgba(35, 22, 77, 0.08);     color: var(--purple);          }
+.badge-low       { background: var(--color-risk-low-bg);   color: var(--color-risk-low);  }
+.badge-medium    { background: var(--color-risk-med-bg);   color: var(--color-risk-med);  }
+.badge-high      { background: var(--color-risk-high-bg);  color: var(--color-risk-high); }
+.badge-admin     { background: rgba(35, 22, 77, 0.1);      color: var(--purple);          }
+.badge-user      { background: oklch(0.95 0 0);             color: var(--gray-text);       }

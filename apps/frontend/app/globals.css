@@ -87,11 +87,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.5 0.13 240);
-  --navy: #093980;
-  --blue: #1873B9;
-  --teal: #08E8DE;
-  --gray-text: #565656;
-  --font-sans: var(--font-jakarta);
+  --navy: #23164D;
+  --blue: #252B65;
+  --teal: #B7D5FF;
+  --gray-text: #6B7280;
+  --font-sans: var(--font-poppins);
 }
 
 @layer base {
