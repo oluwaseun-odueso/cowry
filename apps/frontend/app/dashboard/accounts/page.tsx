@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Loader2, Plus } from "lucide-react";
 import { api, Account, ApiError } from "@/lib/api";
@@ -42,8 +43,8 @@ export default function AccountsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Accounts</h1>
-          <p className={styles.subtitle}>Manage your Cowry bank accounts</p>
+          <h1 className={styles.title}>Your accounts</h1>
+          <p className={styles.subtitle}>Savings, current, and everything in between.</p>
         </div>
         {!hasCurrent && !loading && (
           <button onClick={openCurrent} disabled={creating} className={styles.newBtn}>
@@ -61,7 +62,14 @@ export default function AccountsPage() {
         </div>
       ) : accounts.length === 0 ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyLabel}>No accounts found</p>
+          <Image
+            src="/images/illustrations/vault.svg"
+            alt=""
+            width={96}
+            height={96}
+            className={styles.emptyIllustration}
+          />
+          <p className={styles.emptyLabel}>No accounts yet</p>
           <p className={styles.emptySub}>Your savings account is being set up. Check back shortly.</p>
         </div>
       ) : (
@@ -80,8 +88,10 @@ export default function AccountsPage() {
                 <ArrowRight size={16} className={styles.arrow} />
               </div>
 
-              <p className={styles.balance}>{fmt(account.balance, account.currency)}</p>
-              <p className={styles.currency}>{account.currency}</p>
+              <div className={styles.balanceBlock}>
+                <p className={styles.balanceLabel}>Available balance</p>
+                <p className={styles.balance}>{fmt(account.balance, account.currency)}</p>
+              </div>
 
               <div className={styles.cardBottom}>
                 <div>
