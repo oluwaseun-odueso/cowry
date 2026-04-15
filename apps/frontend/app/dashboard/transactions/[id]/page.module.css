@@ -104,7 +104,7 @@
 }
 
 .typeCredit  { background: var(--color-success-bg); color: var(--color-success); }
-.typeDebit   { background: #09398012; color: var(--navy); }
+.typeDebit   { background: #23164D12; color: var(--navy); }
 
 .statusCompleted { background: var(--color-success-bg); color: var(--color-success); }
 .statusFailed    { background: var(--color-danger-bg);  color: var(--color-danger);  }

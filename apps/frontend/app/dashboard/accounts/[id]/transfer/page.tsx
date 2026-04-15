@@ -22,7 +22,7 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
   const [account, setAccount] = useState<Account | null>(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
 
-  const [toAccountId, setToAccountId] = useState("");
+  const [toAccountNumber, setToAccountNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
@@ -40,8 +40,9 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
   function handleReview(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(amount);
-    if (!toAccountId.trim()) { setError("Enter a destination account ID."); return; }
-    if (toAccountId.trim() === id) { setError("You cannot transfer to the same account."); return; }
+    if (!toAccountNumber.trim()) { setError("Enter the recipient's account number."); return; }
+    if (!/^\d{6,20}$/.test(toAccountNumber.trim())) { setError("Account number must be digits only (6–20 characters)."); return; }
+    if (account && toAccountNumber.trim() === account.accountNumber) { setError("You cannot transfer to your own account."); return; }
     if (!parsed || parsed < 0.01) { setError("Enter a valid amount (min 0.01)."); return; }
     if (account && parsed > account.balance) {
       setError(`Insufficient funds. Available: ${fmt(account.balance, account.currency)}.`);
@@ -56,7 +57,7 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
     setError("");
     try {
       const { data } = await api.accounts.transfer(id, {
-        toAccountId: toAccountId.trim(),
+        toAccountNumber: toAccountNumber.trim(),
         amount: parseFloat(amount),
         ...(description.trim() ? { description: description.trim() } : {}),
       });
@@ -125,8 +126,8 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
               <span className={styles.metaValue}>••••{account.accountNumber.slice(-4)}</span>
             </div>
             <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>To account ID</span>
-              <span className={`${styles.metaValue} ${styles.metaId}`}>{toAccountId.trim()}</span>
+              <span className={styles.metaLabel}>To account</span>
+              <span className={`${styles.metaValue} ${styles.metaId}`}>{toAccountNumber.trim()}</span>
             </div>
             <div className={styles.metaRow}>
               <span className={styles.metaLabel}>Amount</span>
@@ -189,16 +190,18 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
 
         <form onSubmit={handleReview} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Destination account ID</label>
+            <label className={styles.label}>Recipient account number</label>
             <input
               type="text"
-              value={toAccountId}
-              onChange={(e) => { setToAccountId(e.target.value); setError(""); }}
+              inputMode="numeric"
+              value={toAccountNumber}
+              onChange={(e) => { setToAccountNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
               className={styles.input}
-              placeholder="e.g. 3f7a2b1c-..."
+              placeholder="e.g. 2259866425"
+              maxLength={20}
               required
             />
-            <p className={styles.fieldHint}>The unique ID of the recipient&apos;s account.</p>
+            <p className={styles.fieldHint}>The 10-digit account number shown on the recipient&apos;s account card.</p>
           </div>
 
           <div className={styles.field}>

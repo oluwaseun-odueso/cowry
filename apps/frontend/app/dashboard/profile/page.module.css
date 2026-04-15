@@ -66,9 +66,9 @@
   align-items: center;
   gap: 1.5rem;
   padding: 1.75rem 2rem;
-  background: linear-gradient(135deg, var(--navy) 0%, #1873B9 100%);
+  background: linear-gradient(135deg, var(--navy) 0%, #252B65 100%);
   border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(9, 57, 128, 0.2);
+  box-shadow: 0 8px 32px rgba(35, 22, 77, 0.2);
   flex-wrap: wrap;
 }
 
@@ -76,14 +76,14 @@
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 9999px;
-  background: rgba(8, 232, 222, 0.2);
-  border: 2px solid rgba(8, 232, 222, 0.5);
+  background: rgba(183, 213, 255, 0.2);
+  border: 2px solid rgba(183, 213, 255, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.375rem;
   font-weight: 800;
-  color: #08E8DE;
+  color: #B7D5FF;
   letter-spacing: -0.02em;
   flex-shrink: 0;
 }
@@ -124,9 +124,9 @@
   text-transform: uppercase;
 }
 
-.badgeAdmin    { background: rgba(8,232,222,0.2);  color: #08E8DE; }
+.badgeAdmin    { background: rgba(183,213,255,0.2);  color: #B7D5FF; }
 .badgeUser     { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
-.badgeActive   { background: rgba(8,232,222,0.15);  color: #08E8DE; }
+.badgeActive   { background: rgba(183,213,255,0.15);  color: #B7D5FF; }
 .badgeSuspended { background: rgba(255,80,80,0.2);  color: #ff8080; }
 
 /* ── Detail/security cards ── */
