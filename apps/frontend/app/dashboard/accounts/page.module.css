@@ -99,7 +99,7 @@
 }
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(9, 57, 128, 0.1);
+  box-shadow: 0 8px 24px rgba(35, 22, 77, 0.1);
 }
 
 .cardTop {
@@ -130,8 +130,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.badgeSavings  { background: #1873B912; color: var(--blue); }
-.badgeCurrent  { background: #09398012; color: var(--navy); }
+.badgeSavings  { background: #252B6512; color: var(--blue); }
+.badgeCurrent  { background: #23164D12; color: var(--navy); }
 .badgeActive   { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
 .badgeSuspended{ background: var(--color-risk-high-bg); color: var(--color-risk-high); }
 

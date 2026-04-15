@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Copy, Check, LogOut, Trash2, Shield } from "lucide-react";
+import { useState } from "react";
+import { Eye, EyeOff, Copy, Check, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { api, Session } from "@/lib/api";
+import { api } from "@/lib/api";
 import styles from "./page.module.css";
 
 /* ─────────────────────────────────────────────
@@ -301,123 +300,6 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
 }
 
 /* ─────────────────────────────────────────────
-   Sessions section
-───────────────────────────────────────────── */
-function SessionsSection() {
-  const router = useRouter();
-  const { logout } = useAuth();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [revoking, setRevoking] = useState<string | null>(null);
-  const [logoutAllLoading, setLogoutAllLoading] = useState(false);
-  const [showLogoutAllConfirm, setShowLogoutAllConfirm] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.auth.sessions()
-      .then(({ data }) => setSessions(data.sessions))
-      .catch(() => setError("Failed to load sessions."))
-      .finally(() => setLoading(false));
-  }, []);
-
-  async function revokeSession(sessionId: string) {
-    setRevoking(sessionId);
-    try {
-      await api.auth.revokeSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-    } catch {
-      setError("Failed to revoke session.");
-    } finally {
-      setRevoking(null);
-    }
-  }
-
-  async function handleLogoutAll() {
-    setLogoutAllLoading(true);
-    try {
-      await api.auth.logoutAll();
-      logout();
-      router.replace("/login");
-    } catch {
-      setError("Failed to sign out all devices.");
-      setLogoutAllLoading(false);
-    }
-  }
-
-  function fmtDate(d: string) {
-    return new Date(d).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
-  }
-
-  return (
-    <section className={styles.section}>
-      <div className={styles.sectionHeaderRow}>
-        <div>
-          <h2 className={styles.sectionTitle}>Active sessions</h2>
-          <p className={styles.sectionSub}>Devices currently signed in to your account.</p>
-        </div>
-        {sessions.length > 1 && !showLogoutAllConfirm && (
-          <button onClick={() => setShowLogoutAllConfirm(true)} className={styles.dangerGhostBtn}>
-            <LogOut size={14} /> Sign out all
-          </button>
-        )}
-      </div>
-
-      {showLogoutAllConfirm && (
-        <div className={styles.confirmBanner}>
-          <p>This will sign you out of all devices, including this one.</p>
-          <div className={styles.rowBtns}>
-            <button onClick={() => setShowLogoutAllConfirm(false)} className={styles.ghostBtn} disabled={logoutAllLoading}>
-              Cancel
-            </button>
-            <button onClick={handleLogoutAll} disabled={logoutAllLoading} className={styles.dangerBtn}>
-              {logoutAllLoading ? "Signing out…" : "Confirm sign out all"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {error && <p className={styles.errorMsg}>{error}</p>}
-
-      {loading ? (
-        [1,2].map((i) => <div key={i} className={styles.sessionSkeleton} />)
-      ) : sessions.length === 0 ? (
-        <p className={styles.emptyMsg}>No active sessions found.</p>
-      ) : (
-        <div className={styles.sessionList}>
-          {sessions.map((session) => {
-            const browser = session.deviceInfo?.browser ?? "Unknown browser";
-            const os = session.deviceInfo?.os ?? "Unknown OS";
-            const location = session.location
-              ? [session.location.city, session.location.country].filter(Boolean).join(", ")
-              : null;
-            return (
-              <div key={session.id} className={styles.sessionRow}>
-                <div className={styles.sessionInfo}>
-                  <p className={styles.sessionDevice}>{browser} on {os}</p>
-                  <p className={styles.sessionMeta}>
-                    {session.ipAddress}
-                    {location && ` · ${location}`}
-                    {" · "}{fmtDate(session.createdAt)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => revokeSession(session.id)}
-                  disabled={revoking === session.id}
-                  className={styles.revokeBtn}
-                  title="Revoke session"
-                >
-                  {revoking === session.id ? "…" : <Trash2 size={14} />}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
    Page root
 ───────────────────────────────────────────── */
 export default function SecurityPage() {
@@ -427,12 +309,11 @@ export default function SecurityPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Security</h1>
-        <p className={styles.pageSub}>Manage your password, two-factor authentication, and active sessions.</p>
+        <p className={styles.pageSub}>Manage your password and two-factor authentication.</p>
       </div>
 
       <ChangePasswordSection />
       <MfaSection isMfaEnabled={user?.isMfaEnabled ?? false} />
-      <SessionsSection />
     </div>
   );
 }

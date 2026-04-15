@@ -61,7 +61,7 @@
   align-items: center;
   padding: 0.3rem 0.875rem;
   border-radius: 9999px;
-  background: #09398012;
+  background: #23164D12;
   color: var(--navy);
   font-size: 0.6875rem;
   font-weight: 700;
@@ -208,8 +208,8 @@
   white-space: nowrap;
 }
 
-.badgeAdmin    { background: #09398012; color: var(--navy); }
-.badgeUser     { background: #1873B912; color: var(--blue); }
+.badgeAdmin    { background: #23164D12; color: var(--navy); }
+.badgeUser     { background: #252B6512; color: var(--blue); }
 .badgeActive   { background: var(--color-success-bg); color: var(--color-success); }
 .badgeSuspended{ background: var(--color-danger-bg);  color: var(--color-danger);  }
 .badgeLow      { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
