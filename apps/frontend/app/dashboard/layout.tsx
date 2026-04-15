@@ -4,24 +4,43 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   CreditCard,
   LayoutDashboard,
   LogOut,
   Menu,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   User,
   X,
 } from "lucide-react";
+import { CowryLogo } from "@/components/cowry-logo";
 import { useAuth } from "@/lib/auth-context";
 import styles from "./layout.module.css";
 
 const NAV = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/dashboard/accounts", icon: CreditCard },
   { label: "Profile", href: "/dashboard/profile", icon: User },
   { label: "Security", href: "/dashboard/security", icon: Shield },
 ];
+
+const BREADCRUMB: Record<string, string> = {
+  "/dashboard": "Overview",
+  "/dashboard/accounts": "Accounts",
+  "/dashboard/profile": "Profile",
+  "/dashboard/security": "Security",
+  "/dashboard/admin": "Admin",
+};
+
+function deriveBreadcrumb(pathname: string): string {
+  if (BREADCRUMB[pathname]) return BREADCRUMB[pathname];
+  const match = Object.keys(BREADCRUMB)
+    .filter((k) => k !== "/dashboard" && pathname.startsWith(k))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ? BREADCRUMB[match] : "Overview";
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -30,7 +49,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [open, setOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
-  // Close sidebar on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -39,7 +57,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  // Close sidebar when route changes (mobile navigation)
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -54,10 +71,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : "?";
 
   const isAdmin = user?.role === "admin";
+  const mfaEnabled = user?.isMfaEnabled ?? false;
+  const breadcrumb = deriveBreadcrumb(pathname);
 
   return (
     <div className={styles.shell}>
-      {/* ── Top navigation bar ── */}
       <header className={styles.topNav}>
         <div className={styles.topNavLeft}>
           <button
@@ -68,13 +86,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div className={styles.navLogo}>
-            <div className={styles.navLogoMark}>C</div>
-            <span className={styles.navLogoWord}>Cowry</span>
+          <div className={styles.breadcrumb}>
+            <span className={styles.breadcrumbRoot}>Dashboard</span>
+            <span className={styles.breadcrumbSep}>/</span>
+            <span className={styles.breadcrumbCurrent}>{breadcrumb}</span>
           </div>
         </div>
 
         <div className={styles.topNavRight}>
+          <div
+            className={`${styles.securityBadge} ${mfaEnabled ? styles.securityBadgeOk : styles.securityBadgeWarn}`}
+            title={mfaEnabled ? "2FA enabled" : "Enable 2FA for stronger protection"}
+          >
+            {mfaEnabled ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+            <span>{mfaEnabled ? "Protected" : "Secure your account"}</span>
+          </div>
+          <button className={styles.bellBtn} aria-label="Notifications">
+            <Bell size={18} />
+          </button>
+          <div className={styles.topDivider} aria-hidden />
           <div
             className={styles.avatar}
             title={user ? `${user.firstName} ${user.lastName}` : ""}
@@ -84,7 +114,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      {/* ── Sidebar overlay (mobile) ── */}
       {open && (
         <div
           className={styles.overlay}
@@ -93,12 +122,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       )}
 
-      {/* ── Sidebar ── */}
       <aside
         ref={sidebarRef}
         className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""}`}
         aria-label="Main navigation"
       >
+        <div className={styles.sidebarLogo}>
+          <CowryLogo dark size={28} />
+        </div>
+
         <nav className={styles.nav}>
           {NAV.map(({ label, href, icon: Icon }) => {
             const active =
@@ -145,7 +177,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* ── Main content ── */}
       <main className={styles.main}>
         <div className={styles.content}>{children}</div>
       </main>
