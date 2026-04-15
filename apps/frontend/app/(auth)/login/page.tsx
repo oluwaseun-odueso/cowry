@@ -46,7 +46,7 @@ export default function LoginPage() {
 
       <div className={styles.heading}>
         <h1 className={styles.title}>Welcome back.</h1>
-        <p className={styles.subtitle}>Sign in to your Cowry account</p>
+        <p className={styles.subtitle}>Your vault is waiting. Sign in to access your account.</p>
       </div>
 
       <form
