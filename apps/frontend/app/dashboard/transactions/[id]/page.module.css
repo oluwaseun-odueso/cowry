@@ -10,8 +10,9 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
   max-width: 30rem;
+  margin: 0 auto;
   animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -22,23 +23,24 @@
   gap: 0.375rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--blue);
+  color: #6B7280;
   text-decoration: none;
   width: fit-content;
+  transition: color 0.15s;
 }
-.backLink:hover { text-decoration: underline; }
+.backLink:hover { color: #23164D; }
 
 /* ── Shims ── */
 .shimBack {
   width: 8rem; height: 1.25rem;
   border-radius: 9999px;
-  background: oklch(0.93 0 0);
+  background: #F3F3F3;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 .shimReceipt {
   height: 28rem;
   border-radius: 1.5rem;
-  background: oklch(0.93 0 0);
+  background: #F3F3F3;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
@@ -46,17 +48,17 @@
 .errorState {
   padding: 3rem 2rem;
   text-align: center;
-  color: var(--gray-text);
+  color: #6B7280;
   font-size: 0.9375rem;
 }
 
 /* ── Receipt card ── */
 .receipt {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: 1px solid #F3F3F3;
   border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 3px rgba(8, 24, 47, 0.03), 0 8px 24px rgba(8, 24, 47, 0.05);
 }
 
 /* ── Amount hero section ── */
@@ -64,26 +66,31 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.875rem;
-  padding: 2.5rem 2rem 2rem;
-  background: var(--color-bg);
+  gap: 1rem;
+  padding: 2.5rem 2rem 2.25rem;
+  background: #FAFBFF;
 }
 
 .typeIcon {
-  width: 4rem;
-  height: 4rem;
+  width: 4.5rem;
+  height: 4.5rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+.iconCredit { background: rgba(5, 150, 105, 0.1); color: #059669; border: 2px solid rgba(5, 150, 105, 0.25); }
+.iconDebit  { background: rgba(253, 107, 82, 0.1); color: #FD6B52; border: 2px solid rgba(253, 107, 82, 0.25); }
 
 .amountHero {
-  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-size: clamp(2.25rem, 6vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
+.amountCredit { color: #059669; }
+.amountDebit  { color: #FD6B52; }
 
 .badgeRow {
   display: flex;
@@ -95,7 +102,7 @@
 .statusBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.625rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -103,18 +110,17 @@
   text-transform: uppercase;
 }
 
-.typeCredit  { background: var(--color-success-bg); color: var(--color-success); }
-.typeDebit   { background: #23164D12; color: var(--navy); }
+.typeCredit  { background: rgba(5, 150, 105, 0.1); color: #059669; }
+.typeDebit   { background: rgba(253, 107, 82, 0.1); color: #FD6B52; }
 
-.statusCompleted { background: var(--color-success-bg); color: var(--color-success); }
-.statusFailed    { background: var(--color-danger-bg);  color: var(--color-danger);  }
-.statusPending   { background: var(--color-warning-bg); color: var(--color-warning); }
+.statusCompleted { background: rgba(5, 150, 105, 0.1);   color: #059669; }
+.statusFailed    { background: rgba(239, 68, 68, 0.1);   color: #dc2626; }
+.statusPending   { background: rgba(217, 119, 6, 0.12);  color: #d97706; }
 
 /* ── Tear-line divider ── */
 .divider {
   display: flex;
   align-items: center;
-  gap: 0;
   padding: 0 1.25rem;
   position: relative;
 }
@@ -124,8 +130,8 @@
   height: 1px;
   background: repeating-linear-gradient(
     90deg,
-    var(--color-border) 0,
-    var(--color-border) 6px,
+    #E5E7EB 0,
+    #E5E7EB 6px,
     transparent 6px,
     transparent 12px
   );
@@ -135,8 +141,8 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: #FAFBFF;
+  border: 1px solid #F3F3F3;
   flex-shrink: 0;
   margin: 0 -0.625rem;
   z-index: 1;
@@ -146,7 +152,7 @@
 .details {
   display: flex;
   flex-direction: column;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 .detailRow {
@@ -155,13 +161,13 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.875rem 1.75rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #F3F3F3;
 }
 .detailRow:last-child { border-bottom: none; }
 
 .detailLabel {
   font-size: 0.8125rem;
-  color: var(--gray-text);
+  color: #9CA3AF;
   font-weight: 500;
   flex-shrink: 0;
   min-width: 7rem;
@@ -170,7 +176,7 @@
 .detailValue {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--navy);
+  color: #23164D;
   text-align: right;
   word-break: break-all;
 }
@@ -179,16 +185,17 @@
   font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
+  color: #6B7280;
 }
 
 /* ── Receipt footer ── */
 .receiptFooter {
   font-size: 0.6875rem;
-  color: var(--gray-text);
+  color: #9CA3AF;
   text-align: center;
   padding: 1rem 1.75rem 1.25rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  background: var(--color-bg);
-  border-top: 1px solid var(--color-border);
+  background: #FAFBFF;
+  border-top: 1px solid #F3F3F3;
 }

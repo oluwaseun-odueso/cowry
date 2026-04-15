@@ -10,7 +10,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
   animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -18,7 +18,7 @@
 .loadingShim {
   height: 24rem;
   border-radius: 1.25rem;
-  background: oklch(0.93 0 0);
+  background: #F3F3F3;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
@@ -38,22 +38,22 @@
 }
 
 .headerIcon {
-  color: var(--navy);
+  color: #23164D;
   margin-top: 0.25rem;
   flex-shrink: 0;
 }
 
 .pageTitle {
-  font-size: 1.75rem;
+  font-size: clamp(1.625rem, 3vw, 2rem);
   font-weight: 800;
-  color: var(--navy);
-  letter-spacing: -0.03em;
+  color: #23164D;
+  letter-spacing: -0.035em;
 }
 
 .pageSub {
   font-size: 0.9375rem;
-  color: var(--gray-text);
-  margin-top: 0.2rem;
+  color: #6B7280;
+  margin-top: 0.35rem;
 }
 
 .adminBadge {
@@ -61,8 +61,8 @@
   align-items: center;
   padding: 0.3rem 0.875rem;
   border-radius: 9999px;
-  background: #23164D12;
-  color: var(--navy);
+  background: rgba(35, 22, 77, 0.08);
+  color: #23164D;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -74,11 +74,12 @@
 .tabs {
   display: flex;
   gap: 0.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: 1px solid #F3F3F3;
   border-radius: 0.875rem;
   padding: 0.25rem;
   width: fit-content;
+  box-shadow: 0 1px 3px rgba(8, 24, 47, 0.03);
 }
 
 .tab {
@@ -88,13 +89,13 @@
   background: transparent;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--gray-text);
+  color: #6B7280;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   font-family: inherit;
 }
-.tab:hover { color: var(--navy); }
-.tabActive { background: var(--navy); color: #fff; }
+.tab:hover { color: #23164D; }
+.tabActive { background: #23164D; color: #ffffff; }
 
 /* ── Filters ── */
 .filters {
@@ -104,36 +105,40 @@
 }
 
 .filterSelect {
-  height: 2.375rem;
+  height: 2.5rem;
   padding: 0 0.875rem;
-  border-radius: 0.625rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: 0.75rem;
+  border: 1px solid #F3F3F3;
+  background: #FAFBFF;
   font-size: 0.8125rem;
-  color: var(--navy);
+  color: #23164D;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.2s;
 }
-.filterSelect:focus { border-color: var(--blue); }
+.filterSelect:focus {
+  border-color: #B7D5FF;
+  box-shadow: 0 0 0 3px rgba(183, 213, 255, 0.25);
+}
 
 /* ── Error ── */
 .errorMsg {
   font-size: 0.8125rem;
-  color: var(--color-danger);
-  background: var(--color-danger-bg);
-  border: 1px solid var(--color-danger-border, #fca5a5);
-  padding: 0.625rem 1rem;
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
 }
 
-/* ── Table wrapper (scrollable) ── */
+/* ── Table wrapper ── */
 .tableWrap {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: 1px solid #F3F3F3;
   border-radius: 1.25rem;
   overflow: hidden;
   overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(8, 24, 47, 0.03), 0 8px 24px rgba(8, 24, 47, 0.04);
 }
 
 .auditWrap {
@@ -144,13 +149,13 @@
 
 .skeleton {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
-  background: oklch(0.93 0 0);
+  background: #F3F3F3;
 }
 
 .rowSkeleton {
   height: 3.25rem;
   margin: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
 }
 
 /* ── Table ── */
@@ -161,45 +166,46 @@
 }
 
 .table thead tr {
-  background: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
+  background: #FAFBFF;
+  border-bottom: 1px solid #F3F3F3;
 }
 
 .table th {
-  padding: 0.75rem 1.25rem;
+  padding: 0.875rem 1.25rem;
   text-align: left;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--gray-text);
+  color: #9CA3AF;
   white-space: nowrap;
 }
 
 .table td {
   padding: 0.875rem 1.25rem;
-  color: var(--navy);
-  border-bottom: 1px solid var(--color-border);
+  color: #23164D;
+  border-bottom: 1px solid #F3F3F3;
   vertical-align: middle;
 }
 
 .table tbody tr:last-child td { border-bottom: none; }
-.table tbody tr:hover td { background: var(--color-bg); }
+.table tbody tr:nth-child(even) td { background: #FAFBFF; }
+.table tbody tr:hover td { background: #F3F3F3; }
 
 /* ── Cell helpers ── */
 .tdName  { font-weight: 700; white-space: nowrap; }
-.tdEmail { color: var(--gray-text); white-space: nowrap; }
-.tdDate  { white-space: nowrap; color: var(--gray-text); font-size: 0.75rem; }
+.tdEmail { color: #6B7280; white-space: nowrap; }
+.tdDate  { white-space: nowrap; color: #9CA3AF; font-size: 0.75rem; }
 .tdCenter{ text-align: center; }
 .tdRule  { font-weight: 600; white-space: nowrap; }
 .tdDesc  { max-width: 18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tdIp    { font-family: ui-monospace, monospace; font-size: 0.75rem; white-space: nowrap; }
+.tdIp    { font-family: ui-monospace, monospace; font-size: 0.75rem; white-space: nowrap; color: #6B7280; }
 
 /* ── Badges ── */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.625rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -208,41 +214,45 @@
   white-space: nowrap;
 }
 
-.badgeAdmin    { background: #23164D12; color: var(--navy); }
-.badgeUser     { background: #252B6512; color: var(--blue); }
-.badgeActive   { background: var(--color-success-bg); color: var(--color-success); }
-.badgeSuspended{ background: var(--color-danger-bg);  color: var(--color-danger);  }
-.badgeLow      { background: var(--color-risk-low-bg);  color: var(--color-risk-low);  }
-.badgeMed      { background: var(--color-risk-med-bg);  color: var(--color-risk-med);  }
-.badgeHigh     { background: var(--color-risk-high-bg); color: var(--color-risk-high); }
+.badgeAdmin    { background: rgba(35, 22, 77, 0.08); color: #23164D; }
+.badgeUser     { background: rgba(183, 213, 255, 0.2); color: #252B65; }
+.badgeActive   { background: rgba(5, 150, 105, 0.1);  color: #059669; }
+.badgeSuspended{ background: rgba(239, 68, 68, 0.1);  color: #dc2626; }
+.badgeLow      { background: rgba(5, 150, 105, 0.1);  color: #059669; }
+.badgeMed      { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+.badgeHigh     { background: rgba(239, 68, 68, 0.1);  color: #dc2626; }
 
 /* ── Icon indicators ── */
-.iconOk { color: var(--color-success); display: block; margin: 0 auto; }
-.iconNo { color: var(--gray-text); display: block; text-align: center; }
+.iconOk { color: #059669; display: block; margin: 0 auto; }
+.iconNo { color: #9CA3AF; display: block; text-align: center; }
 
 /* ── Resolve button ── */
 .resolveBtn {
   height: 1.875rem;
   padding: 0 0.875rem;
   border-radius: 9999px;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid #F3F3F3;
   background: transparent;
-  color: var(--navy);
+  color: #23164D;
   font-size: 0.75rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.resolveBtn:hover:not(:disabled) { background: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success); }
+.resolveBtn:hover:not(:disabled) {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.4);
+  color: #059669;
+}
 .resolveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Empty state ── */
 .emptyMsg {
   padding: 2.5rem;
   text-align: center;
-  color: var(--gray-text);
+  color: #6B7280;
   font-size: 0.875rem;
 }
 
@@ -255,22 +265,22 @@
 }
 
 .pageBtn {
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1.125rem;
   border-radius: 9999px;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--navy);
+  border: 1.5px solid #F3F3F3;
+  background: #ffffff;
+  color: #23164D;
   font-size: 0.8125rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
-.pageBtn:hover:not(:disabled) { border-color: var(--blue); }
+.pageBtn:hover:not(:disabled) { border-color: #B7D5FF; background: #FAFBFF; }
 .pageBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .pageInfo {
   font-size: 0.8125rem;
-  color: var(--gray-text);
+  color: #6B7280;
   font-weight: 600;
 }
