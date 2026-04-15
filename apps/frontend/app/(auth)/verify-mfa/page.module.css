@@ -52,7 +52,7 @@
   height: 3rem;
   border-radius: 0.875rem;
   background-color: rgba(8,232,222,0.15);
-  color: #08E8DE;
+  color: #B7D5FF;
   margin-bottom: 1rem;
 }
 
@@ -156,12 +156,12 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #1873B9;
+  background-color: #252B65;
   border: none;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.1s;
 }
-.submitBtn:hover { background-color: #1565a3; }
+.submitBtn:hover { background-color: #23164D; }
 .submitBtn:active { transform: scale(0.98); }
 .submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 

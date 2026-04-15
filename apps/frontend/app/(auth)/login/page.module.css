@@ -29,7 +29,7 @@
   display: block;
   width: 2.5rem;
   height: 2px;
-  background: linear-gradient(90deg, #1873B9, #08E8DE);
+  background: linear-gradient(90deg, #252B65, #B7D5FF);
   border-radius: 9999px;
   margin-top: 1rem;
   transform-origin: left;
@@ -91,7 +91,7 @@
 .forgotLink {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #08E8DE;
+  color: #B7D5FF;
   text-decoration: none;
   transition: opacity 0.15s;
 }
@@ -115,14 +115,14 @@
   font-weight: 500;
   outline: none;
   transition: border-bottom-color 0.2s ease;
-  caret-color: #08E8DE;
+  caret-color: #B7D5FF;
 }
 .input::placeholder {
   color: rgba(255, 255, 255, 0.25);
   font-weight: 400;
 }
 .input:focus {
-  border-bottom-color: #08E8DE;
+  border-bottom-color: #B7D5FF;
 }
 
 .inputWithIcon {
@@ -171,7 +171,7 @@
   height: 3.25rem;
   width: 100%;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%);
+  background: #252B65;
   border: none;
   color: #ffffff;
   font-size: 0.9375rem;
@@ -182,12 +182,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 20px rgba(8, 232, 222, 0.18);
+  transition: transform 0.15s, box-shadow 0.2s, background 0.15s;
+  box-shadow: 0 4px 20px rgba(37, 43, 101, 0.35);
 }
 .submitBtn:hover {
+  background: #23164D;
   transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(8, 232, 222, 0.28);
+  box-shadow: 0 8px 28px rgba(37, 43, 101, 0.5);
 }
 .submitBtn:active { transform: scale(0.98) translateY(0); }
 .submitBtn:disabled {
@@ -211,4 +212,4 @@
   text-decoration: none;
   transition: color 0.15s;
 }
-.footerLink:hover { color: #08E8DE; }
+.footerLink:hover { color: #B7D5FF; }

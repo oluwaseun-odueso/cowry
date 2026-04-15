@@ -22,7 +22,7 @@
 
 .brand { display: flex; flex-direction: column; align-items: center; animation: reveal 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 
-.accent { display: block; width: 2.5rem; height: 2px; background: linear-gradient(90deg, #1873B9, #08E8DE); border-radius: 9999px; margin-top: 1rem; transform-origin: left; animation: line-grow 0.6s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+.accent { display: block; width: 2.5rem; height: 2px; background: linear-gradient(90deg, #252B65, #B7D5FF); border-radius: 9999px; margin-top: 1rem; transform-origin: left; animation: line-grow 0.6s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
 
 .heading { animation: reveal 0.5s cubic-bezier(0.22,1,0.36,1) 0.1s both; }
 
@@ -38,9 +38,9 @@
 
 .inputWrap { position: relative; }
 
-.input { display: block; width: 100%; background: transparent; border: none; border-bottom: 1.5px solid rgba(255,255,255,0.18); border-radius: 0; padding: 0.75rem 0; color: #ffffff; font-size: 0.9375rem; font-family: inherit; font-weight: 500; outline: none; transition: border-bottom-color 0.2s ease; caret-color: #08E8DE; }
+.input { display: block; width: 100%; background: transparent; border: none; border-bottom: 1.5px solid rgba(255,255,255,0.18); border-radius: 0; padding: 0.75rem 0; color: #ffffff; font-size: 0.9375rem; font-family: inherit; font-weight: 500; outline: none; transition: border-bottom-color 0.2s ease; caret-color: #B7D5FF; }
 .input::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; }
-.input:focus { border-bottom-color: #08E8DE; }
+.input:focus { border-bottom-color: #B7D5FF; }
 
 .inputWithIcon { composes: input; padding-right: 2.25rem; }
 
@@ -49,8 +49,8 @@
 
 .error { padding: 0.875rem 1rem; border-radius: 0.875rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); font-size: 0.8125rem; color: #fca5a5; line-height: 1.4; }
 
-.submitBtn { height: 3.25rem; width: 100%; border-radius: 9999px; background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%); border: none; color: #ffffff; font-size: 0.9375rem; font-weight: 700; font-family: inherit; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(8,232,222,0.18); transition: transform 0.15s, box-shadow 0.2s; }
-.submitBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(8,232,222,0.28); }
+.submitBtn { height: 3.25rem; width: 100%; border-radius: 9999px; background: #252B65; border: none; color: #ffffff; font-size: 0.9375rem; font-weight: 700; font-family: inherit; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37,43,101,0.35); transition: transform 0.15s, box-shadow 0.2s; }
+.submitBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(37,43,101,0.5); }
 .submitBtn:active { transform: scale(0.98) translateY(0); }
 .submitBtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -60,11 +60,11 @@
 /* ── Success ── */
 .success { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; padding: 1rem 0; animation: fade-in 0.4s ease both; }
 
-.successRing { width: 4.5rem; height: 4.5rem; border-radius: 9999px; background: linear-gradient(135deg, rgba(24,115,185,0.15), rgba(8,232,222,0.15)); border: 1.5px solid rgba(8,232,222,0.35); display: flex; align-items: center; justify-content: center; color: #08E8DE; animation: pop-in 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.successRing { width: 4.5rem; height: 4.5rem; border-radius: 9999px; background: linear-gradient(135deg, rgba(24,115,185,0.15), rgba(8,232,222,0.15)); border: 1.5px solid rgba(8,232,222,0.35); display: flex; align-items: center; justify-content: center; color: #B7D5FF; animation: pop-in 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 
 .successTitle { font-size: 1.5rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em; }
 
 .successText { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.6; }
 
-.loginBtn { height: 3.25rem; width: 100%; border-radius: 9999px; background: linear-gradient(135deg, #1873B9 0%, #08E8DE 100%); color: #ffffff; font-size: 0.9375rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(8,232,222,0.18); transition: transform 0.15s, box-shadow 0.2s; }
-.loginBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(8,232,222,0.28); }
+.loginBtn { height: 3.25rem; width: 100%; border-radius: 9999px; background: #252B65; color: #ffffff; font-size: 0.9375rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 20px rgba(37,43,101,0.35); transition: transform 0.15s, box-shadow 0.2s; }
+.loginBtn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(37,43,101,0.5); }

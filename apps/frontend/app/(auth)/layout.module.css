@@ -6,12 +6,7 @@
   justify-content: center;
   padding: 2rem 1.25rem;
 
-  /* Aurora — static radial gradients, zero DOM nodes, zero JS */
-  background:
-    radial-gradient(ellipse 120% 55% at 110% -5%,  rgba(8, 232, 222, 0.13) 0%, transparent 55%),
-    radial-gradient(ellipse 80%  90% at -10% 110%, rgba(24, 115, 185, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 60%  60% at 50%  -20%, rgba(24, 115, 185, 0.08) 0%, transparent 60%),
-    #07306e;
+  background: linear-gradient(160deg, #23164D 0%, #08182F 100%);
 }
 
 .content {
