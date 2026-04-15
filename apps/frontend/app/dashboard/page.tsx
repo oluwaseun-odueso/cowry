@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, CreditCard } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Account, Transaction } from "@/lib/api";
 import styles from "./page.module.css";
@@ -62,68 +63,74 @@ export default function DashboardPage() {
   const totalCredit = recentTxs.filter((t) => t.type === "credit").reduce((s, t) => s + t.amount, 0);
   const totalDebit  = recentTxs.filter((t) => t.type === "debit").reduce((s, t) => s + t.amount, 0);
   const currency = accounts[0]?.currency ?? "GBP";
+  const today = new Date().toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long",
+  });
 
   return (
     <div className={styles.page}>
-      {/* Greeting */}
       <div className={styles.greetingBlock}>
+        <p className={styles.greetingDate}>{today}</p>
         <h1 className={styles.greeting}>{greeting()}, {user?.firstName ?? "there"}.</h1>
-        <p className={styles.greetingSub}>Here&rsquo;s an overview of your finances.</p>
+        <p className={styles.greetingSub}>Here&rsquo;s how your money&rsquo;s moving today.</p>
       </div>
 
-      {/* Summary cards */}
       <div className={styles.cards}>
         {loading ? (
           [1,2,3].map((i) => <div key={i} className={`${styles.card} ${styles.skeleton}`} />)
         ) : (
           <>
-            <div className={styles.card}>
-              <div className={styles.cardIcon} style={{ background: "var(--color-success-bg)", color: "var(--color-success)" }}>
-                <CreditCard size={18} />
+            <div className={`${styles.card} ${styles.cardHero}`} style={{ "--i": 0 } as React.CSSProperties}>
+              <div className={styles.heroGlow} aria-hidden />
+              <div className={styles.heroHeader}>
+                <span className={styles.heroLabel}>Total balance</span>
+                <Wallet size={18} className={styles.heroIcon} />
               </div>
-              <div>
-                <p className={styles.cardLabel}>Total balance</p>
-                <p className={styles.cardValue}>{accounts.length ? fmt(totalBalance, currency) : "—"}</p>
-              </div>
+              <p className={styles.heroValue}>{accounts.length ? fmt(totalBalance, currency) : "—"}</p>
+              <p className={styles.heroMeta}>
+                Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
+              </p>
             </div>
-            <div className={styles.card}>
-              <div className={styles.cardIcon} style={{ background: "var(--color-success-bg)", color: "var(--color-success)" }}>
+
+            <div className={styles.card} style={{ "--i": 1 } as React.CSSProperties}>
+              <div className={`${styles.cardIcon} ${styles.iconTrust}`}>
                 <ArrowDownLeft size={18} />
               </div>
               <div>
-                <p className={styles.cardLabel}>Money in (recent)</p>
+                <p className={styles.cardLabel}>Money in</p>
                 <p className={styles.cardValue}>{accounts.length ? fmt(totalCredit, currency) : "—"}</p>
+                <p className={styles.cardMeta}>Recent credits</p>
               </div>
             </div>
-            <div className={styles.card}>
-              <div className={styles.cardIcon} style={{ background: "#09398012", color: "var(--navy)" }}>
+
+            <div className={styles.card} style={{ "--i": 2 } as React.CSSProperties}>
+              <div className={`${styles.cardIcon} ${styles.iconPeach}`}>
                 <ArrowUpRight size={18} />
               </div>
               <div>
-                <p className={styles.cardLabel}>Money out (recent)</p>
+                <p className={styles.cardLabel}>Money out</p>
                 <p className={styles.cardValue}>{accounts.length ? fmt(totalDebit, currency) : "—"}</p>
+                <p className={styles.cardMeta}>Recent debits</p>
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Quick actions */}
       {!loading && accounts.length > 0 && (
         <div className={styles.quickLinks}>
-          <Link href={`/dashboard/accounts/${accounts[0].id}/deposit`} className={styles.quickLink}>
-            <ArrowDownLeft size={15} /> Deposit
+          <Link href={`/dashboard/accounts/${accounts[0].id}/deposit`} className={`${styles.quickLink} ${styles.quickDeposit}`}>
+            <ArrowDownLeft size={16} /> Deposit
           </Link>
-          <Link href={`/dashboard/accounts/${accounts[0].id}/withdraw`} className={styles.quickLink}>
-            <ArrowUpRight size={15} /> Withdraw
+          <Link href={`/dashboard/accounts/${accounts[0].id}/withdraw`} className={`${styles.quickLink} ${styles.quickWithdraw}`}>
+            <ArrowUpRight size={16} /> Withdraw
           </Link>
-          <Link href={`/dashboard/accounts/${accounts[0].id}/transfer`} className={styles.quickLink}>
-            <CreditCard size={15} /> Transfer
+          <Link href={`/dashboard/accounts/${accounts[0].id}/transfer`} className={`${styles.quickLink} ${styles.quickTransfer}`}>
+            <ArrowLeftRight size={16} /> Transfer
           </Link>
         </div>
       )}
 
-      {/* Recent activity */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Recent activity</h2>
@@ -136,18 +143,20 @@ export default function DashboardPage() {
             [1,2,3].map((i) => <div key={i} className={`${styles.txRowSkeleton} ${styles.skeleton}`} />)
           ) : recentTxs.length === 0 ? (
             <div className={styles.emptyState}>
+              <Image
+                src="/images/illustrations/aboutCard.svg"
+                alt=""
+                width={72}
+                height={72}
+                className={styles.emptyIllustration}
+              />
               <p className={styles.emptyLabel}>No transactions yet</p>
               <p className={styles.emptySub}>Deposit or transfer to get started.</p>
             </div>
           ) : (
             recentTxs.map((tx) => (
               <Link key={tx.id} href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
-                <div
-                  className={styles.txIcon}
-                  style={tx.type === "credit"
-                    ? { background: "var(--color-success-bg)", color: "var(--color-success)" }
-                    : { background: "#09398012", color: "var(--navy)" }}
-                >
+                <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
                   {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
                 </div>
                 <div className={styles.txInfo}>
@@ -155,7 +164,7 @@ export default function DashboardPage() {
                   {tx.description && <p className={styles.txDesc}>{tx.description}</p>}
                 </div>
                 <div className={styles.txRight}>
-                  <p className={styles.txAmount} style={{ color: tx.type === "credit" ? "var(--color-success)" : "var(--navy)" }}>
+                  <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
                     {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, tx.accountCurrency)}
                   </p>
                   <p className={styles.txTime}>{timeAgo(tx.createdAt)}</p>

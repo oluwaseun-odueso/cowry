@@ -27,7 +27,7 @@ export default function ResetPasswordPage({
     setError("");
     setLoading(true);
     try {
-      await api.auth.resetPassword({ token, password });
+      await api.auth.resetPassword({ token, password, confirmPassword: confirm });
       setDone(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
