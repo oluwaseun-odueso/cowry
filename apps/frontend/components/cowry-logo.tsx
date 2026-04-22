@@ -13,7 +13,7 @@ interface CowryLogoProps {
   size?: number;
 }
 
-export function CowryLogo({ tagline, dark = false, size = 36 }: CowryLogoProps) {
+export function CowryLogo({ tagline, dark = false, size = 20 }: CowryLogoProps) {
   return (
     <div className={styles.root}>
       <div className={styles.logoRow}>

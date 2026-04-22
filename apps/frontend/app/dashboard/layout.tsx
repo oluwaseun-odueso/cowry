@@ -128,7 +128,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         aria-label="Main navigation"
       >
         <div className={styles.sidebarLogo}>
-          <CowryLogo dark size={28} />
+          <CowryLogo dark size={20} />
         </div>
 
         <nav className={styles.nav}>

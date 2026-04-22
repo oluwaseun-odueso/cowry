@@ -236,7 +236,6 @@
   }
 
   .inputWithIcon {
-    composes: input;
     padding-right: 3rem;
   }
 

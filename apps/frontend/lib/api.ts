@@ -18,6 +18,20 @@ function getToken(): string | null {
 
 // ─── Token refresh ────────────────────────────────────────────────
 
+// Module-level proactive refresh timer — lives outside React so it persists
+// across re-renders and reschedules itself after every successful refresh.
+let proactiveTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleProactiveRefresh(expiresInSeconds: number) {
+  if (proactiveTimer) clearTimeout(proactiveTimer);
+  const delay = Math.max(0, (expiresInSeconds - 120) * 1000); // fire 2 min before expiry
+  proactiveTimer = setTimeout(() => {
+    // On success, refreshAccessToken() calls scheduleProactiveRefresh() again —
+    // keeping the chain alive indefinitely as long as the user is logged in.
+    refreshAccessToken().catch(() => {});
+  }, delay);
+}
+
 // Coalesces parallel 401s so only one refresh request is in-flight at a time.
 let refreshPromise: Promise<string> | null = null;
 
@@ -41,6 +55,8 @@ export async function refreshAccessToken(): Promise<string> {
     localStorage.setItem("refreshToken", data.refreshToken);
     // Keep the JS-readable cookie in sync for Next.js middleware
     document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax`;
+    // Reschedule the next proactive refresh — this keeps the chain alive forever.
+    scheduleProactiveRefresh(data.expiresIn);
     return data.accessToken as string;
   })().finally(() => {
     refreshPromise = null;
@@ -56,7 +72,11 @@ function clearSession() {
 
 // ─── Core request ─────────────────────────────────────────────────
 
-async function request<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  isRetry = false,
+): Promise<T> {
   const token = getToken();
 
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -71,7 +91,9 @@ async function request<T>(path: string, options: RequestInit = {}, isRetry = fal
 
   // Proactive: backend warns us the token is about to expire — refresh silently in background
   if (res.ok && res.headers.get("X-Token-Expiring") === "true") {
-    refreshAccessToken().catch(() => {/* ignore — next 401 will handle it */});
+    refreshAccessToken().catch(() => {
+      /* ignore — next 401 will handle it */
+    });
   }
 
   const data = await res.json().catch(() => ({ message: "Unexpected error" }));
@@ -149,7 +171,12 @@ export interface Transfer {
 export interface Session {
   id: string;
   ipAddress: string;
-  deviceInfo?: { browser?: string; os?: string; device?: string; isMobile?: boolean } | null;
+  deviceInfo?: {
+    browser?: string;
+    os?: string;
+    device?: string;
+    isMobile?: boolean;
+  } | null;
   location?: { country?: string; city?: string } | null;
   createdAt: string;
   expiresAt: string;
@@ -228,7 +255,11 @@ export const api = {
         body: JSON.stringify({ email }),
       }),
 
-    resetPassword: (body: { token: string; password: string; confirmPassword: string }) =>
+    resetPassword: (body: {
+      token: string;
+      password: string;
+      confirmPassword: string;
+    }) =>
       request("/auth/reset-password", {
         method: "POST",
         body: JSON.stringify(body),
@@ -256,15 +287,21 @@ export const api = {
       }),
 
     setupMfa: () =>
-      request<{ status: string; data: { otpauthUrl: string; secret: string } }>("/auth/setup-mfa", {
-        method: "POST",
-      }),
+      request<{ status: string; data: { otpauthUrl: string; secret: string } }>(
+        "/auth/setup-mfa",
+        {
+          method: "POST",
+        },
+      ),
 
     enableMfa: (code: string) =>
-      request<{ status: string; data: { backupCodes: string[] } }>("/auth/enable-mfa", {
-        method: "POST",
-        body: JSON.stringify({ code }),
-      }),
+      request<{ status: string; data: { backupCodes: string[] } }>(
+        "/auth/enable-mfa",
+        {
+          method: "POST",
+          body: JSON.stringify({ code }),
+        },
+      ),
 
     disableMfa: (code: string) =>
       request("/auth/disable-mfa", {
@@ -273,7 +310,9 @@ export const api = {
       }),
 
     sessions: () =>
-      request<{ status: string; data: { sessions: Session[] } }>("/auth/sessions"),
+      request<{ status: string; data: { sessions: Session[] } }>(
+        "/auth/sessions",
+      ),
 
     revokeSession: (sessionId: string) =>
       request(`/auth/sessions/${sessionId}`, { method: "DELETE" }),
@@ -290,25 +329,39 @@ export const api = {
       }),
 
     get: (id: string) =>
-      request<{ status: string; data: { account: Account } }>(`/accounts/${id}`),
+      request<{ status: string; data: { account: Account } }>(
+        `/accounts/${id}`,
+      ),
 
     deposit: (id: string, body: { amount: number; description?: string }) =>
-      request<{ status: string; data: { transaction: Transaction; balance: number } }>(
-        `/accounts/${id}/deposit`,
-        { method: "POST", body: JSON.stringify(body) },
-      ),
+      request<{
+        status: string;
+        data: { transaction: Transaction; balance: number };
+      }>(`/accounts/${id}/deposit`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
 
     withdraw: (id: string, body: { amount: number; description?: string }) =>
-      request<{ status: string; data: { transaction: Transaction; balance: number } }>(
-        `/accounts/${id}/withdraw`,
-        { method: "POST", body: JSON.stringify(body) },
-      ),
+      request<{
+        status: string;
+        data: { transaction: Transaction; balance: number };
+      }>(`/accounts/${id}/withdraw`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
 
-    transfer: (id: string, body: { toAccountId: string; amount: number; description?: string }) =>
-      request<{ status: string; data: { transfer: Transfer; balance: number } }>(
-        `/accounts/${id}/transfer`,
-        { method: "POST", body: JSON.stringify(body) },
-      ),
+    transfer: (
+      id: string,
+      body: { toAccountNumber: string; amount: number; description?: string },
+    ) =>
+      request<{
+        status: string;
+        data: { transfer: Transfer; balance: number };
+      }>(`/accounts/${id}/transfer`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
 
     transactions: (
       id: string,
@@ -344,12 +397,16 @@ export const api = {
 
   transactions: {
     get: (id: string) =>
-      request<{ status: string; data: { transaction: Transaction } }>(`/transactions/${id}`),
+      request<{ status: string; data: { transaction: Transaction } }>(
+        `/transactions/${id}`,
+      ),
   },
 
   admin: {
     users: () =>
-      request<{ status: string; data: { users: PublicUser[] } }>("/admin/users"),
+      request<{ status: string; data: { users: PublicUser[] } }>(
+        "/admin/users",
+      ),
 
     auditLog: (params?: {
       riskLevel?: string;

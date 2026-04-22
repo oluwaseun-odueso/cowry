@@ -216,7 +216,7 @@
 .floatCard {
   display: none;
   position: absolute;
-  top: 28%;
+  top: 42%;
   z-index: 3;
   filter: drop-shadow(0 24px 48px rgba(8, 24, 47, 0.55));
   backdrop-filter: blur(2px);
@@ -224,13 +224,25 @@
 @media (min-width: 860px) { .floatCard { display: block; } }
 
 .floatLeft {
-  left: 3%;
+  left: 10%;
   animation: float 5.5s ease-in-out infinite;
 }
 .floatRight {
-  right: 3%;
+  right: 10%;
   animation: float-delayed 5.5s ease-in-out 1.8s infinite;
 }
+
+/* ── Hero connector arrows ── */
+.heroConnectors {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+@media (min-width: 860px) { .heroConnectors { display: block; } }
 
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
@@ -421,7 +433,7 @@
 .aboutHeaderLeft { max-width: 38rem; }
 
 .aboutEyebrow {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -634,7 +646,7 @@
 
 .featuresEyebrow {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -713,7 +725,7 @@
 
 .testimonialsEyebrow {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
