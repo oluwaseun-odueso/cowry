@@ -6,6 +6,11 @@ import { emailService } from '../services/email.service';
 // import { FraudDetectionService } from '../services/fraud.service';
 import { GeoLocation } from '@cowry/types';
 import geoip from 'geoip-lite';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { OtpCodeRepository } from '../models/otpCode';
+import { sendOtpSms } from '../services/twilio.service';
 
 export class AuthController {
   private authService: AuthService;
@@ -439,6 +444,69 @@ export class AuthController {
       });
     } catch (error: any) {
       return res.status(401).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
+   * Request a step-up OTP — generates a 6-digit code, stores a bcrypt hash,
+   * and sends it via SMS to the authenticated user's phone number.
+   */
+  requestOtp = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { action } = req.body;
+      const validActions = ['large_transfer', 'change_password', 'unfreeze_card', 'cancel_card', 'disable_mfa', 'reveal_card', 'unblock_card'];
+      if (!action || !validActions.includes(action)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid action.' });
+      }
+
+      const user = await UserRepository.findById(req.user!.id);
+      if (!user) return res.status(404).json({ status: 'error', message: 'User not found.' });
+
+      const code = String(crypto.randomInt(100000, 999999));
+      const codeHash = await bcrypt.hash(code, 10);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      await OtpCodeRepository.create(user.id, action, codeHash, expiresAt);
+      await sendOtpSms(user.phoneNumber, code, action);
+
+      return res.status(200).json({ status: 'success', data: { sent: true } });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
+   * Verify a step-up OTP and issue a short-lived step-up JWT (10 min, type "step_up").
+   * The frontend sends this token as X-OTP-Token on the guarded request.
+   */
+  verifyOtp = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { action, code } = req.body;
+      if (!action || !code) {
+        return res.status(400).json({ status: 'error', message: 'action and code are required.' });
+      }
+
+      const record = await OtpCodeRepository.findPending(req.user!.id, action);
+      if (!record) {
+        return res.status(400).json({ status: 'error', message: 'No pending OTP found. Please request a new code.' });
+      }
+
+      const valid = await bcrypt.compare(String(code), record.codeHash);
+      if (!valid) {
+        return res.status(400).json({ status: 'error', message: 'Invalid code.' });
+      }
+
+      await OtpCodeRepository.markUsed(record.id);
+
+      const otpToken = jwt.sign(
+        { userId: req.user!.id, action, type: 'step_up' },
+        process.env.JWT_SECRET!,
+        { expiresIn: '10m' }
+      );
+
+      return res.status(200).json({ status: 'success', data: { otpToken } });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
     }
   };
 

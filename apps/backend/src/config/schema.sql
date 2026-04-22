@@ -148,6 +148,20 @@ CREATE TABLE IF NOT EXISTS `transactions` (
     FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `otp_codes` (
+  `id`         CHAR(36)     NOT NULL,
+  `user_id`    CHAR(36)     NOT NULL,
+  `action`     VARCHAR(64)  NOT NULL,
+  `code_hash`  VARCHAR(255) NOT NULL,
+  `expires_at` DATETIME     NOT NULL,
+  `used`       TINYINT(1)   NOT NULL DEFAULT 0,
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_otp_codes_user_id` (`user_id`),
+  CONSTRAINT `fk_otp_codes_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `transfers` (
   `id`              CHAR(36)                                    NOT NULL,
   `from_account_id` CHAR(36)                                    NOT NULL,

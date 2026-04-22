@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { AccountService } from '../services/account.service';
 import { AccountType, TransactionType } from '@cowry/types';
+import jwt from 'jsonwebtoken';
+
+const STEP_UP_TRANSFER_THRESHOLD = 500;
 
 export class AccountController {
   private accountService: AccountService;
@@ -74,11 +77,39 @@ export class AccountController {
   createTransfer = async (req: Request<{ id: string }>, res: Response): Promise<Response> => {
     try {
       const { toAccountNumber, amount, description } = req.body;
+      const parsedAmount = parseFloat(amount);
+
+      // Require step-up OTP for large transfers
+      if (parsedAmount > STEP_UP_TRANSFER_THRESHOLD) {
+        const otpToken = req.headers['x-otp-token'] as string | undefined;
+        if (!otpToken) {
+          return res.status(403).json({
+            status: 'error',
+            message: 'Step-up verification required for transfers over £500.',
+            stepUpRequired: true,
+            action: 'large_transfer',
+          });
+        }
+        try {
+          const decoded = jwt.verify(otpToken, process.env.JWT_SECRET!) as { userId: string; action: string; type: string };
+          if (decoded.type !== 'step_up' || decoded.action !== 'large_transfer' || decoded.userId !== req.user!.id) {
+            throw new Error('Invalid token');
+          }
+        } catch {
+          return res.status(403).json({
+            status: 'error',
+            message: 'Step-up token is invalid or expired.',
+            stepUpRequired: true,
+            action: 'large_transfer',
+          });
+        }
+      }
+
       const { transfer, balance } = await this.accountService.transfer(
         req.user!.id,
         req.params.id,
         toAccountNumber,
-        parseFloat(amount),
+        parsedAmount,
         description
       );
       return res.status(200).json({ status: 'success', data: { transfer, balance } });

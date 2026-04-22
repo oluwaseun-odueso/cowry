@@ -304,10 +304,23 @@ export const api = {
         },
       ),
 
-    disableMfa: (code: string) =>
+    disableMfa: (code: string, otpToken: string) =>
       request("/auth/disable-mfa", {
         method: "POST",
         body: JSON.stringify({ code }),
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    requestOtp: (action: string) =>
+      request<{ status: string; data: { sent: boolean } }>("/auth/request-otp", {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      }),
+
+    verifyOtp: (action: string, code: string) =>
+      request<{ status: string; data: { otpToken: string } }>("/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ action, code }),
       }),
 
     sessions: () =>

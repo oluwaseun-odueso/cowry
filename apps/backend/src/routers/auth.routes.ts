@@ -4,7 +4,8 @@ import rateLimit from 'express-rate-limit';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { ValidationMiddleware } from '../middleware/validation.middleware';
-import { UserRepository, toPublicUser } from '../models'
+import { UserRepository, toPublicUser } from '../models';
+import { requireStepUp } from '../middleware/stepup.middleware';
 
 // Tight limiter for credential submission endpoints (login, MFA verify, token refresh)
 const loginLimiter = rateLimit({
@@ -208,18 +209,6 @@ router.post(
 );
 
 /**
- * @route PUT /api/v1/auth/change-password
- * @desc Change password
- * @access Private
- */
-router.put(
-  '/change-password',
-  AuthMiddleware.authenticate,
-  ValidationMiddleware.validate(ValidationMiddleware.changePasswordRules),
-  authController.changePassword
-);
-
-/**
  * @route GET /api/v1/auth/verify-email?token=...
  * @desc Verify email when user clicks the link in their inbox (browser GET)
  * @access Public
@@ -275,14 +264,48 @@ router.post(
 
 /**
  * @route POST /api/v1/auth/disable-mfa
- * @desc Disable MFA — requires current TOTP or backup code
+ * @desc Disable MFA — requires current TOTP or backup code + step-up OTP
  * @access Private
  */
 router.post(
   '/disable-mfa',
   AuthMiddleware.authenticate,
+  requireStepUp('disable_mfa'),
   ValidationMiddleware.validate(ValidationMiddleware.disableMfaRules),
   authController.disableMfa
+);
+
+/**
+ * @route POST /api/v1/auth/request-otp
+ * @desc Request a step-up OTP (sent via SMS) for a sensitive action
+ * @access Private
+ */
+router.post(
+  '/request-otp',
+  AuthMiddleware.authenticate,
+  authController.requestOtp
+);
+
+/**
+ * @route POST /api/v1/auth/verify-otp
+ * @desc Verify a step-up OTP code and receive a short-lived step-up JWT
+ * @access Private
+ */
+router.post(
+  '/verify-otp',
+  AuthMiddleware.authenticate,
+  authController.verifyOtp
+);
+
+/**
+ * @route PUT /api/v1/auth/change-password (step-up protected)
+ */
+router.put(
+  '/change-password',
+  AuthMiddleware.authenticate,
+  requireStepUp('change_password'),
+  ValidationMiddleware.validate(ValidationMiddleware.changePasswordRules),
+  authController.changePassword
 );
 
 // ============================================
