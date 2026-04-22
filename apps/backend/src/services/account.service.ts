@@ -183,14 +183,10 @@ export class AccountService {
   async transfer(
     userId: string,
     fromAccountId: string,
-    toAccountId: string,
+    toAccountNumber: string,
     amount: number,
     description?: string
   ): Promise<{ transfer: Transfer; balance: number }> {
-    if (fromAccountId === toAccountId) {
-      throw new Error('Cannot transfer to the same account.');
-    }
-
     const fromAccount = await this.getAccount(userId, fromAccountId);
     if (fromAccount.status !== BankAccountStatus.ACTIVE) {
       throw new Error('Source account is suspended.');
@@ -199,8 +195,11 @@ export class AccountService {
       throw new Error('Insufficient funds.');
     }
 
-    const toAccount = await AccountRepository.findById(toAccountId);
+    const toAccount = await AccountRepository.findByAccountNumber(toAccountNumber);
     if (!toAccount) throw new Error('Destination account not found.');
+    if (toAccount.id === fromAccountId) {
+      throw new Error('Cannot transfer to the same account.');
+    }
     if (toAccount.status !== BankAccountStatus.ACTIVE) {
       throw new Error('Destination account is suspended.');
     }
@@ -225,7 +224,7 @@ export class AccountService {
       // Credit destination
       await conn.execute(
         'UPDATE accounts SET balance = ? WHERE id = ?',
-        [toAccount.balance + amount, toAccountId]
+        [toAccount.balance + amount, toAccount.id]
       );
       // Debit transaction record
       await conn.execute(
@@ -237,14 +236,14 @@ export class AccountService {
       await conn.execute(
         `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
          VALUES (?, ?, 'credit', ?, ?, ?, ?, 'completed')`,
-        [uuidv4(), toAccountId, amount, toAccount.currency, creditRef, description ?? null]
+        [uuidv4(), toAccount.id, amount, toAccount.currency, creditRef, description ?? null]
       );
       // Transfer record
       transferId = uuidv4();
       await conn.execute(
         `INSERT INTO transfers (id, from_account_id, to_account_id, amount, currency, reference, status)
          VALUES (?, ?, ?, ?, ?, ?, 'completed')`,
-        [transferId, fromAccountId, toAccountId, amount, fromAccount.currency, reference]
+        [transferId, fromAccountId, toAccount.id, amount, fromAccount.currency, reference]
       );
 
       await conn.commit();
@@ -255,7 +254,7 @@ export class AccountService {
       conn.release();
     }
 
-    this.runTransferFraudChecks(userId, fromAccountId, toAccountId, amount).catch(() => {});
+    this.runTransferFraudChecks(userId, fromAccountId, toAccount.id, amount).catch(() => {});
 
     return {
       transfer: (await TransferRepository.findById(transferId!))!,

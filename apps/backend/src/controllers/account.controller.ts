@@ -73,11 +73,11 @@ export class AccountController {
 
   createTransfer = async (req: Request<{ id: string }>, res: Response): Promise<Response> => {
     try {
-      const { toAccountId, amount, description } = req.body;
+      const { toAccountNumber, amount, description } = req.body;
       const { transfer, balance } = await this.accountService.transfer(
         req.user!.id,
         req.params.id,
-        toAccountId,
+        toAccountNumber,
         parseFloat(amount),
         description
       );

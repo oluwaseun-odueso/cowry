@@ -202,9 +202,10 @@ export class ValidationMiddleware {
   ];
 
   static transferRules: ValidationChain[] = [
-    body('toAccountId')
-      .notEmpty().withMessage('Destination account ID is required')
-      .isUUID().withMessage('Destination account ID must be a valid UUID'),
+    body('toAccountNumber')
+      .notEmpty().withMessage('Destination account number is required')
+      .isNumeric().withMessage('Account number must be numeric')
+      .isLength({ min: 6, max: 20 }).withMessage('Account number must be between 6 and 20 digits'),
     body('amount')
       .notEmpty().withMessage('Amount is required')
       .isFloat({ min: 0.01 }).withMessage('Amount must be a positive number'),
