@@ -13,6 +13,7 @@ const accountController = new AccountController();
 router.get(
   '/:id',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   accountController.getTransaction
 );
 

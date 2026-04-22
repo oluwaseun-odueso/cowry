@@ -45,8 +45,8 @@ export default function VerifyEmailPage({
       ring: styles.ringSuccess,
       icon: <CheckCircle2 size={26} />,
       title: "Email verified!",
-      text: "You're all set. Start banking with Cowry.",
-      cta: <Link href="/login" className={styles.btn}>Sign in</Link>,
+      text: "Your identity is confirmed. Sign in to complete your account setup.",
+      cta: <Link href="/login" className={styles.btn}>Continue to sign in</Link>,
     },
     error: {
       ring: styles.ringError,
