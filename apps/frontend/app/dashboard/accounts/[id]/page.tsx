@@ -101,8 +101,16 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               {account.status}
             </span>
           </div>
-          <p className={styles.accountNumLabel}>Account number</p>
-          <p className={styles.accountNum}>{account.accountNumber}</p>
+          <div className={styles.accountDetails}>
+            <div>
+              <p className={styles.accountNumLabel}>Account number</p>
+              <p className={styles.accountNum}>{account.accountNumber}</p>
+            </div>
+            <div>
+              <p className={styles.accountNumLabel}>Sort code</p>
+              <p className={styles.accountNum}>{account.sortCode ? account.sortCode.replace(/(\d{2})(\d{2})(\d{2})/, '$1-$2-$3') : '40-00-01'}</p>
+            </div>
+          </div>
         </div>
         <p className={styles.accountBalance}>{fmt(account.balance, account.currency)}</p>
         <p className={styles.accountCurrency}>{account.currency}</p>

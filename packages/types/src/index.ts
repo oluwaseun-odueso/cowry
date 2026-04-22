@@ -34,6 +34,7 @@ export interface Account {
   id: string;
   userId: string;
   accountNumber: string;
+  sortCode: string;
   accountType: AccountType;
   currency: string;
   balance: number;
