@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { CheckCircle, XCircle, Shield } from "lucide-react";
 import { api, PublicUser } from "@/lib/api";
 import styles from "./page.module.css";
@@ -60,7 +61,17 @@ export default function ProfilePage() {
 
       {/* Avatar + name hero */}
       <div className={styles.heroCard}>
-        <div className={styles.avatar}>{initials(user.firstName, user.lastName)}</div>
+        {user.avatar ? (
+          <Image
+            src={`/images/avatars/${user.avatar}.svg`}
+            alt="Your avatar"
+            width={80}
+            height={80}
+            className={styles.avatarImg}
+          />
+        ) : (
+          <div className={styles.avatar}>{initials(user.firstName, user.lastName)}</div>
+        )}
         <div className={styles.heroInfo}>
           <h2 className={styles.heroName}>{user.firstName} {user.lastName}</h2>
           <p className={styles.heroEmail}>{user.email}</p>

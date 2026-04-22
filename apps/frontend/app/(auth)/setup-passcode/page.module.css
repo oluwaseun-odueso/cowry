@@ -1,0 +1,181 @@
+.page {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--gradient-hero);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 768px) {
+  .card {
+    background: #fff;
+    border: none;
+    box-shadow: 0 8px 40px rgba(35, 22, 77, 0.12);
+  }
+}
+
+.lockIcon { font-size: 3rem; }
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: rgba(183, 213, 255, 0.75);
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .title { color: var(--purple); }
+  .subtitle { color: var(--gray-text); }
+}
+
+.error {
+  font-size: 0.875rem;
+  color: #f87171;
+  margin: 0;
+  text-align: center;
+}
+
+.pinRow {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.pinInput {
+  width: 3rem;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  caret-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.875rem;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.pinInput:focus {
+  border-color: rgba(183, 213, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(183, 213, 255, 0.2);
+}
+
+.pinFilled {
+  border-color: rgba(183, 213, 255, 0.5);
+}
+
+@media (min-width: 768px) {
+  .pinInput {
+    background: #fafbff;
+    border-color: var(--card-border);
+    color: var(--purple);
+  }
+
+  .pinInput:focus {
+    border-color: var(--light-blue);
+    box-shadow: 0 0 0 3px rgba(183, 213, 255, 0.25);
+  }
+
+  .pinFilled { border-color: var(--light-blue); }
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: 3rem;
+  background: var(--signup-btn);
+  color: #fff;
+  border: none;
+  border-radius: 0.875rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 16px rgba(253, 107, 82, 0.4);
+}
+
+.primaryBtn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(253, 107, 82, 0.5);
+}
+
+.primaryBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.ghostBtn {
+  width: 100%;
+  height: 2.75rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ghostBtn:hover { background: rgba(255, 255, 255, 0.12); }
+
+@media (min-width: 768px) {
+  .ghostBtn {
+    background: #f3f3f3;
+    color: var(--gray-text);
+    border-color: #f3f3f3;
+  }
+  .ghostBtn:hover { background: #ebebeb; }
+}
+
+.skipBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: rgba(183, 213, 255, 0.55);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.25rem;
+  align-self: center;
+  transition: color 0.15s;
+}
+
+.skipBtn:hover { color: rgba(183, 213, 255, 0.85); }
+
+@media (min-width: 768px) {
+  .skipBtn { color: var(--gray-text); }
+  .skipBtn:hover { color: var(--purple); }
+}

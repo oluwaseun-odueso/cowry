@@ -13,12 +13,15 @@ interface AuthState {
   user: PublicUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isLocked: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   login: (tokens: { accessToken: string; refreshToken: string; expiresIn?: number }, user: PublicUser) => void;
   logout: () => Promise<void>;
   setUser: (user: PublicUser) => void;
+  lock: () => void;
+  unlock: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -28,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     isLoading: true,
     isAuthenticated: false,
+    isLocked: false,
   });
 
   // Restore session on mount
@@ -51,13 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .getProfile()
       .then(({ data }) => {
         document.cookie = `accessToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-        setState({ user: data.user, isLoading: false, isAuthenticated: true });
+        setState({ user: data.user, isLoading: false, isAuthenticated: true, isLocked: false });
       })
       .catch(() => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
-        setState({ user: null, isLoading: false, isAuthenticated: false });
+        setState({ user: null, isLoading: false, isAuthenticated: false, isLocked: false });
       });
   }, []);
 
@@ -68,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       // Seed the self-rescheduling refresh chain — api.ts takes it from here
       scheduleProactiveRefresh(tokens.expiresIn ?? 900);
-      setState({ user, isLoading: false, isAuthenticated: true });
+      setState({ user, isLoading: false, isAuthenticated: true, isLocked: false });
     },
     [],
   );
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
-      setState({ user: null, isLoading: false, isAuthenticated: false });
+      setState({ user: null, isLoading: false, isAuthenticated: false, isLocked: false });
     }
   }, []);
 
@@ -90,8 +94,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, user }));
   }, []);
 
+  const lock = useCallback(() => {
+    setState((s) => ({ ...s, isLocked: true }));
+  }, []);
+
+  const unlock = useCallback(() => {
+    setState((s) => ({ ...s, isLocked: false }));
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setUser }}>
+    <AuthContext.Provider value={{ ...state, login, logout, setUser, lock, unlock }}>
       {children}
     </AuthContext.Provider>
   );

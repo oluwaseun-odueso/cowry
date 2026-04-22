@@ -510,6 +510,57 @@ export class AuthController {
     }
   };
 
+  setPasscode = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { passcode } = req.body;
+      if (!passcode || !/^\d{6}$/.test(passcode)) {
+        return res.status(400).json({ status: 'error', message: 'Passcode must be exactly 6 digits.' });
+      }
+      const hash = await bcrypt.hash(passcode, 10);
+      await UserRepository.setPasscode(req.user!.id, hash);
+      return res.json({ status: 'success', message: 'Passcode set.' });
+    } catch (err: any) {
+      return res.status(500).json({ status: 'error', message: err.message });
+    }
+  };
+
+  verifyPasscode = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { passcode } = req.body;
+      if (!passcode) {
+        return res.status(400).json({ status: 'error', message: 'Passcode is required.' });
+      }
+      const user = await UserRepository.findById(req.user!.id);
+      if (!user?.passcodeHash) {
+        return res.status(400).json({ status: 'error', message: 'No passcode set.' });
+      }
+      const valid = await bcrypt.compare(passcode, user.passcodeHash);
+      if (!valid) {
+        return res.status(401).json({ status: 'error', message: 'Incorrect passcode.' });
+      }
+      return res.json({ status: 'success', data: { valid: true } });
+    } catch (err: any) {
+      return res.status(500).json({ status: 'error', message: err.message });
+    }
+  };
+
+  setAvatar = async (req: Request, res: Response): Promise<Response> => {
+    const VALID_AVATARS = [
+      'hereLocsAvatar', 'blackBoyOnLowcut', 'indianBoy',
+      'retiredOldMan', 'retiredOldWoman', 'whiteBoy', 'whiteGirl', 'youngGirl1',
+    ];
+    try {
+      const { avatar } = req.body;
+      if (!avatar || !VALID_AVATARS.includes(avatar)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid avatar slug.' });
+      }
+      await UserRepository.setAvatar(req.user!.id, avatar);
+      return res.json({ status: 'success', message: 'Avatar updated.' });
+    } catch (err: any) {
+      return res.status(500).json({ status: 'error', message: err.message });
+    }
+  };
+
   /**
    * Helper: Set refresh token cookie
    */
