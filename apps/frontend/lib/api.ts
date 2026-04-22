@@ -138,6 +138,7 @@ export interface Account {
   id: string;
   userId: string;
   accountNumber: string;
+  sortCode: string;
   accountType: "savings" | "current";
   currency: string;
   balance: number;

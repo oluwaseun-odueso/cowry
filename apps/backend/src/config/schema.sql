@@ -114,7 +114,8 @@ CREATE TABLE IF NOT EXISTS `fraud_alerts` (
 CREATE TABLE IF NOT EXISTS `accounts` (
   `id`             CHAR(36)                        NOT NULL,
   `user_id`        CHAR(36)                        NOT NULL,
-  `account_number` VARCHAR(10)                     NOT NULL,
+  `account_number` VARCHAR(8)                      NOT NULL,
+  `sort_code`      VARCHAR(6)                      NOT NULL DEFAULT '400001',
   `account_type`   ENUM('savings', 'current')      NOT NULL,
   `currency`       VARCHAR(3)                      NOT NULL DEFAULT 'GBP',
   `balance`        DECIMAL(15,2)                   NOT NULL DEFAULT 0.00,

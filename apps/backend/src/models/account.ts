@@ -9,11 +9,14 @@ export type CreateAccountInput = {
   currency?: string;
 };
 
+const SORT_CODE = '400001';
+
 function mapRow(row: RowDataPacket): Account {
   return {
     id: row.id,
     userId: row.user_id,
     accountNumber: row.account_number,
+    sortCode: row.sort_code ?? SORT_CODE,
     accountType: row.account_type as AccountType,
     currency: row.currency,
     balance: parseFloat(row.balance),
@@ -23,8 +26,8 @@ function mapRow(row: RowDataPacket): Account {
 }
 
 function generateAccountNumber(): string {
-  // 10-digit number padded with leading zeros
-  return String(Math.floor(Math.random() * 9_000_000_000) + 1_000_000_000);
+  // 8-digit UK-standard account number, zero-padded
+  return String(Math.floor(Math.random() * 90_000_000) + 10_000_000);
 }
 
 export class AccountRepository {
@@ -45,9 +48,9 @@ export class AccountRepository {
     }
 
     await pool.execute<ResultSetHeader>(
-      `INSERT INTO accounts (id, user_id, account_number, account_type, currency)
-       VALUES (?, ?, ?, ?, ?)`,
-      [id, data.userId, accountNumber!, data.accountType, data.currency ?? 'GBP']
+      `INSERT INTO accounts (id, user_id, account_number, sort_code, account_type, currency)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, data.userId, accountNumber!, SORT_CODE, data.accountType, data.currency ?? 'GBP']
     );
 
     return (await AccountRepository.findById(id))!;

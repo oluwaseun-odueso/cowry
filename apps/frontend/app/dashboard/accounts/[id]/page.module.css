@@ -101,6 +101,12 @@
 .badgeActive    { background: rgba(5, 150, 105, 0.22);  color: #34d399; }
 .badgeSuspended { background: rgba(239, 68, 68, 0.22);  color: #fca5a5; }
 
+.accountDetails {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
 .accountNumLabel {
   font-size: 0.6875rem;
   font-weight: 600;
