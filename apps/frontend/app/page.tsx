@@ -147,6 +147,33 @@ function HeroSection() {
         />
       </div>
 
+      {/* Connector arrows — desktop only */}
+      <svg className={styles.heroConnectors} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid meet" aria-hidden fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrowHead" markerWidth="7" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7" stroke="rgba(183,213,255,0.55)" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </marker>
+        </defs>
+        {/* Left: avatar left edge → left card bottom-center, one swirl */}
+        <path
+          d="M 500,640 C 450,675 310,665 305,600 C 300,545 264,590 264,553"
+          stroke="rgba(183,213,255,0.45)"
+          strokeWidth="1.5"
+          strokeDasharray="10 10"
+          strokeLinecap="round"
+          markerEnd="url(#arrowHead)"
+        />
+        {/* Right: avatar right edge → right card bottom-center, one swirl */}
+        <path
+          d="M 940,640 C 990,675 1130,665 1135,600 C 1140,545 1188,590 1188,538"
+          stroke="rgba(183,213,255,0.45)"
+          strokeWidth="1.5"
+          strokeDasharray="10 10"
+          strokeLinecap="round"
+          markerEnd="url(#arrowHead)"
+        />
+      </svg>
+
       {/* Trust strip */}
       <div className={styles.trustStrip}>
         {["256-bit AES encryption", "TOTP two-factor auth", "Real-time fraud detection", "Zero hidden fees"].map((t) => (
@@ -169,12 +196,18 @@ function AboutSection() {
       <div className={styles.aboutHeader}>
         <div className={styles.aboutHeaderLeft}>
           <p className={styles.aboutEyebrow}>Who We Are</p>
-          <h2 className={styles.aboutTitle}>
+          {/* <h2 className={styles.aboutTitle}>
             Banking that respects<br />your time — and your money.
+          </h2> */}
+          <h2 className={styles.aboutTitle}>
+            Banking that respects<br />your time and your money.
           </h2>
-          <p className={styles.aboutSubtitle}>
+          {/* <p className={styles.aboutSubtitle}>
             Cowry gives you the tools, transparency, and security of a high-street bank —
             without any of the friction.
+          </p> */}
+          <p className={styles.aboutSubtitle}>
+            Cowry gives you the tools, transparency, and security of a high-street bank, without any of the friction.
           </p>
         </div>
         <Link href="/register" className={styles.aboutSignupBtn}>Sign Up</Link>
@@ -358,7 +391,7 @@ function CtaSection() {
           and day-to-day banking.
         </p>
         <div className={styles.ctaBtns}>
-          <Link href="/register" className={styles.ctaSignupBtn}>Create free account</Link>
+          <Link href="/register" className={styles.ctaSignupBtn}>Create a free account</Link>
           <Link href="/login" className={styles.ctaLoginBtn}>Sign in</Link>
         </div>
       </div>
