@@ -83,6 +83,16 @@
   pointer-events: none;
 }
 
+.avatarImg {
+  position: relative;
+  z-index: 1;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid rgba(183, 213, 255, 0.4);
+}
+
 .avatar {
   position: relative;
   z-index: 1;

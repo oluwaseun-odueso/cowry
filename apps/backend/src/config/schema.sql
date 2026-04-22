@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `lock_until`       DATETIME                               NULL,
   `phone_number`     VARCHAR(20)                            NOT NULL,
   `tag`              VARCHAR(32)                            NULL,
+  `passcode_hash`    VARCHAR(255)                           NULL,
+  `avatar`           VARCHAR(64)                            NULL,
   `is_mfa_enabled`   TINYINT(1)                             NOT NULL DEFAULT 0,
   `mfa_secret`       VARCHAR(255)                           NULL,
   `email_verified`   TINYINT(1)                             NOT NULL DEFAULT 0,

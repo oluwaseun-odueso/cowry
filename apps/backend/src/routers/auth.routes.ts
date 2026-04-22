@@ -298,6 +298,39 @@ router.post(
 );
 
 /**
+ * @route POST /api/v1/auth/set-passcode
+ * @desc Set or update 6-digit passcode for lock screen
+ * @access Private
+ */
+router.post(
+  '/set-passcode',
+  AuthMiddleware.authenticate,
+  authController.setPasscode
+);
+
+/**
+ * @route POST /api/v1/auth/verify-passcode
+ * @desc Verify 6-digit passcode (used to unlock session)
+ * @access Private
+ */
+router.post(
+  '/verify-passcode',
+  AuthMiddleware.authenticate,
+  authController.verifyPasscode
+);
+
+/**
+ * @route POST /api/v1/auth/set-avatar
+ * @desc Set user avatar slug
+ * @access Private
+ */
+router.post(
+  '/set-avatar',
+  AuthMiddleware.authenticate,
+  authController.setAvatar
+);
+
+/**
  * @route PUT /api/v1/auth/change-password (step-up protected)
  */
 router.put(

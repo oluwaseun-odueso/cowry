@@ -393,6 +393,24 @@ export const api = {
         body: JSON.stringify({ action, code }),
       }),
 
+    setPasscode: (passcode: string) =>
+      request("/auth/set-passcode", {
+        method: "POST",
+        body: JSON.stringify({ passcode }),
+      }),
+
+    verifyPasscode: (passcode: string) =>
+      request<{ status: string; data: { valid: boolean } }>("/auth/verify-passcode", {
+        method: "POST",
+        body: JSON.stringify({ passcode }),
+      }),
+
+    setAvatar: (avatar: string) =>
+      request("/auth/set-avatar", {
+        method: "POST",
+        body: JSON.stringify({ avatar }),
+      }),
+
     sessions: () =>
       request<{ status: string; data: { sessions: Session[] } }>(
         "/auth/sessions",

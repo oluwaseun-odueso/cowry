@@ -20,6 +20,8 @@ export interface User {
   lockUntil?: Date;
   phoneNumber: string;
   tag?: string;
+  passcodeHash?: string;
+  avatar?: string;
   isMfaEnabled: boolean;
   mfaSecret?: string;
   emailVerified: boolean;
@@ -59,6 +61,8 @@ const COLUMN_MAP: Record<string, string> = {
   lockUntil: "lock_until",
   phoneNumber: "phone_number",
   tag: "tag",
+  passcodeHash: "passcode_hash",
+  avatar: "avatar",
   isMfaEnabled: "is_mfa_enabled",
   mfaSecret: "mfa_secret",
   emailVerified: "email_verified",
@@ -82,6 +86,8 @@ function mapRow(row: RowDataPacket): User {
     lockUntil: row.lock_until ?? undefined,
     phoneNumber: row.phone_number ?? undefined,
     tag: row.tag ?? undefined,
+    passcodeHash: row.passcode_hash ?? undefined,
+    avatar: row.avatar ?? undefined,
     isMfaEnabled: Boolean(row.is_mfa_enabled),
     mfaSecret: row.mfa_secret ?? undefined,
     emailVerified: Boolean(row.email_verified),
@@ -181,6 +187,14 @@ export class UserRepository {
 
   static async setTag(id: string, tag: string): Promise<void> {
     await pool.execute("UPDATE users SET tag = ? WHERE id = ?", [tag, id]);
+  }
+
+  static async setPasscode(id: string, passcodeHash: string): Promise<void> {
+    await pool.execute("UPDATE users SET passcode_hash = ? WHERE id = ?", [passcodeHash, id]);
+  }
+
+  static async setAvatar(id: string, avatar: string): Promise<void> {
+    await pool.execute("UPDATE users SET avatar = ? WHERE id = ?", [avatar, id]);
   }
 
   static async findAll(): Promise<User[]> {

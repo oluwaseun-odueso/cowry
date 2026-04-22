@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -20,6 +21,9 @@ import {
 } from "lucide-react";
 import { CowryLogo } from "@/components/cowry-logo";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
+import { startActivityTracker, stopActivityTracker } from "@/lib/activity-tracker";
+import { startInactivityLock, stopInactivityLock } from "@/lib/inactivity-lock";
 import styles from "./layout.module.css";
 
 const NAV = [
@@ -54,11 +58,41 @@ function deriveBreadcrumb(pathname: string): string {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isLocked, lock, unlock } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [passcodeDigits, setPasscodeDigits] = useState<string[]>(Array(6).fill(""));
+  const [passcodeError, setPasscodeError] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
+  const passcodeRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Start activity tracker and inactivity lock when mounted
+  useEffect(() => {
+    startActivityTracker();
+    startInactivityLock();
+    return () => {
+      stopActivityTracker();
+      stopInactivityLock();
+    };
+  }, []);
+
+  // Listen for lockSession event dispatched by inactivity-lock.ts
+  useEffect(() => {
+    function onLock() { lock(); }
+    window.addEventListener("lockSession", onLock);
+    return () => window.removeEventListener("lockSession", onLock);
+  }, [lock]);
+
+  // Focus first passcode input when lock screen appears
+  useEffect(() => {
+    if (isLocked) {
+      setPasscodeDigits(Array(6).fill(""));
+      setPasscodeError("");
+      setTimeout(() => passcodeRefs.current[0]?.focus(), 100);
+    }
+  }, [isLocked]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -73,8 +107,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   async function handleLogout() {
+    stopActivityTracker();
+    stopInactivityLock();
     await logout();
     router.push("/login");
+  }
+
+  function handlePasscodeDigit(i: number, val: string) {
+    if (!/^\d?$/.test(val)) return;
+    const next = [...passcodeDigits];
+    next[i] = val.slice(-1);
+    setPasscodeDigits(next);
+    if (val && i < 5) passcodeRefs.current[i + 1]?.focus();
+    // Auto-submit when all 6 filled
+    if (val && i === 5 && next.every(d => d)) {
+      void submitPasscode(next.join(""));
+    }
+  }
+
+  function handlePasscodeKeyDown(e: React.KeyboardEvent, i: number) {
+    if (e.key === "Backspace" && !passcodeDigits[i] && i > 0) {
+      passcodeRefs.current[i - 1]?.focus();
+    }
+  }
+
+  async function submitPasscode(code: string) {
+    setUnlocking(true);
+    setPasscodeError("");
+    try {
+      await api.auth.verifyPasscode(code);
+      unlock();
+    } catch {
+      setPasscodeError("Incorrect passcode. Try again.");
+      setPasscodeDigits(Array(6).fill(""));
+      setTimeout(() => passcodeRefs.current[0]?.focus(), 50);
+    } finally {
+      setUnlocking(false);
+    }
   }
 
   const initials = user
@@ -87,6 +156,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={styles.shell}>
+      {isLocked && (
+        <div className={styles.lockScreen} role="dialog" aria-modal aria-label="Session locked">
+          <div className={styles.lockCard}>
+            {user?.avatar ? (
+              <Image
+                src={`/images/avatars/${user.avatar}.svg`}
+                alt="Your avatar"
+                width={80}
+                height={80}
+                className={styles.lockAvatar}
+              />
+            ) : (
+              <div className={styles.lockInitials}>{initials}</div>
+            )}
+            <p className={styles.lockName}>{user?.firstName} {user?.lastName}</p>
+            <p className={styles.lockHint}>Enter your passcode to continue</p>
+
+            <div className={styles.lockPinRow}>
+              {passcodeDigits.map((d, i) => (
+                <input
+                  key={i}
+                  ref={el => { passcodeRefs.current[i] = el; }}
+                  className={`${styles.lockPinInput} ${d ? styles.lockPinFilled : ""}`}
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={d}
+                  onChange={e => handlePasscodeDigit(i, e.target.value)}
+                  onKeyDown={e => handlePasscodeKeyDown(e, i)}
+                  disabled={unlocking}
+                />
+              ))}
+            </div>
+
+            {passcodeError && <p className={styles.lockError}>{passcodeError}</p>}
+
+            <button className={styles.lockLogout} onClick={() => void handleLogout()}>
+              Not you? Sign out
+            </button>
+          </div>
+        </div>
+      )}
       <header className={styles.topNav}>
         <div className={styles.topNavLeft}>
           <button
