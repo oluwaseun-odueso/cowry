@@ -14,6 +14,7 @@ const accountController = new AccountController();
 router.post(
   '/',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   ValidationMiddleware.validate(ValidationMiddleware.createAccountRules),
   accountController.createAccount
 );
@@ -26,6 +27,7 @@ router.post(
 router.get(
   '/',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   accountController.getAccounts
 );
 
@@ -37,6 +39,7 @@ router.get(
 router.get(
   '/:id',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   accountController.getAccount
 );
 
@@ -48,6 +51,7 @@ router.get(
 router.post(
   '/:id/deposit',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   ValidationMiddleware.validate(ValidationMiddleware.depositRules),
   accountController.deposit
 );
@@ -60,6 +64,7 @@ router.post(
 router.post(
   '/:id/withdraw',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   ValidationMiddleware.validate(ValidationMiddleware.withdrawRules),
   accountController.withdraw
 );
@@ -72,6 +77,7 @@ router.post(
 router.post(
   '/:id/transfer',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   ValidationMiddleware.validate(ValidationMiddleware.transferRules),
   accountController.createTransfer
 );
@@ -84,6 +90,7 @@ router.post(
 router.get(
   '/:id/transactions',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   accountController.getTransactions
 );
 
@@ -95,6 +102,7 @@ router.get(
 router.get(
   '/:id/statement',
   AuthMiddleware.authenticate,
+  AuthMiddleware.requireMfa,
   ValidationMiddleware.validate(ValidationMiddleware.statementRules),
   accountController.getStatement
 );

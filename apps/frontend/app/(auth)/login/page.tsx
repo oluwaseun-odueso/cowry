@@ -28,7 +28,7 @@ export default function LoginPage() {
       }
       if (res.data.accessToken) {
         login({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "", expiresIn: res.data.expiresIn }, res.data.user);
-        router.push("/dashboard");
+        router.push(res.data.user.isMfaEnabled ? "/dashboard" : "/setup-mfa");
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");

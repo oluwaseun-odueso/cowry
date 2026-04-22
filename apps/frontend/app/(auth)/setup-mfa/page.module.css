@@ -1,0 +1,283 @@
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 22rem;
+  animation: fade-up 0.5s ease both;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  padding: 3rem 0;
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+.iconWrap {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: rgba(183, 213, 255, 0.1);
+  border: 1px solid rgba(183, 213, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #B7D5FF;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.desc {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+}
+
+.error {
+  padding: 0.875rem 1rem;
+  border-radius: 0.875rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  font-size: 0.8125rem;
+  color: #fca5a5;
+  line-height: 1.4;
+}
+
+/* QR code */
+.qrWrap {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.qrPlaceholder {
+  width: 180px;
+  height: 180px;
+  background: rgba(183, 213, 255, 0.08);
+  border-radius: 0.5rem;
+}
+
+.secretRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.secretLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+
+.secretCode {
+  font-size: 0.8125rem;
+  font-family: monospace;
+  color: #B7D5FF;
+  background: rgba(183, 213, 255, 0.08);
+  border: 1px solid rgba(183, 213, 255, 0.2);
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  flex: 1;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #B7D5FF;
+  background: transparent;
+  border: 1px solid rgba(183, 213, 255, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.copyBtn:hover { background: rgba(183, 213, 255, 0.1); }
+
+/* Code input */
+.label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: -0.5rem;
+}
+
+.codeInput {
+  display: block;
+  width: 100%;
+  height: 4rem;
+  background: rgba(183, 213, 255, 0.06);
+  border: 1.5px solid rgba(183, 213, 255, 0.2);
+  border-radius: 0.875rem;
+  text-align: center;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  color: #ffffff;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  caret-color: #B7D5FF;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding-left: 0.5em;
+}
+.codeInput::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.3em;
+}
+.codeInput:focus {
+  border-color: #B7D5FF;
+  box-shadow: 0 0 0 3px rgba(183, 213, 255, 0.15);
+}
+
+/* Buttons */
+.btnRow {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.submitBtn {
+  flex: 1;
+  height: 3.25rem;
+  border-radius: 9999px;
+  background: #252B65;
+  border: none;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 20px rgba(37, 43, 101, 0.4);
+  transition: transform 0.15s, box-shadow 0.2s, background 0.15s;
+}
+.submitBtn:hover:not(:disabled) {
+  background: #23164D;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(37, 43, 101, 0.55);
+}
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ghostBtn {
+  height: 3.25rem;
+  padding: 0 1.25rem;
+  border-radius: 9999px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ghostBtn:hover { border-color: rgba(255, 255, 255, 0.3); color: #ffffff; }
+
+/* Backup codes */
+.backupGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.backupCode {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  background: rgba(183, 213, 255, 0.06);
+  border: 1px solid rgba(183, 213, 255, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: #B7D5FF;
+  text-align: center;
+}
+
+/* Desktop light theme */
+@media (min-width: 768px) {
+  .iconWrap {
+    background: rgba(35, 22, 77, 0.06);
+    border-color: rgba(35, 22, 77, 0.15);
+    color: #23164D;
+  }
+  .title { color: #23164D; }
+  .desc { color: #6B7280; }
+  .label { color: #6B7280; }
+  .loading { color: #6B7280; }
+
+  .secretCode {
+    color: #23164D;
+    background: rgba(35, 22, 77, 0.04);
+    border-color: rgba(35, 22, 77, 0.12);
+  }
+  .copyBtn {
+    color: #23164D;
+    border-color: rgba(35, 22, 77, 0.2);
+  }
+  .copyBtn:hover { background: rgba(35, 22, 77, 0.05); }
+  .secretLabel { color: #9CA3AF; }
+
+  .codeInput {
+    background: #FAFBFF;
+    border-color: #F3F3F3;
+    color: #23164D;
+    caret-color: #23164D;
+  }
+  .codeInput::placeholder { color: #D1D5DB; }
+  .codeInput:focus {
+    border-color: #B7D5FF;
+    box-shadow: 0 0 0 3px rgba(183, 213, 255, 0.25);
+  }
+
+  .error { background: rgba(239, 68, 68, 0.08); color: #dc2626; }
+
+  .ghostBtn {
+    border-color: #E5E7EB;
+    color: #6B7280;
+  }
+  .ghostBtn:hover { border-color: #B7D5FF; color: #23164D; }
+
+  .backupCode {
+    color: #23164D;
+    background: rgba(35, 22, 77, 0.04);
+    border-color: rgba(35, 22, 77, 0.12);
+  }
+}

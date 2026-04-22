@@ -12,6 +12,7 @@ declare global {
       email: string;
       role: UserRole;
       status: string;
+      isMfaEnabled: boolean;
     }
   }
 }
@@ -183,6 +184,24 @@ export class AuthMiddleware {
         message: 'Invalid refresh token'
       });
     }
+  };
+
+  /**
+   * Require MFA to be set up - must be used after authenticate middleware
+   * Returns 403 { mfaSetupRequired: true } if user hasn't enabled MFA
+   */
+  static requireMfa = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ status: 'error', message: 'Unauthorized access' });
+    }
+    if (!req.user.isMfaEnabled) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'MFA setup required',
+        mfaSetupRequired: true,
+      });
+    }
+    next();
   };
 
   /**
