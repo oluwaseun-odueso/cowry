@@ -19,6 +19,7 @@ export interface User {
   loginAttempts: number;
   lockUntil?: Date;
   phoneNumber: string;
+  tag?: string;
   isMfaEnabled: boolean;
   mfaSecret?: string;
   emailVerified: boolean;
@@ -57,6 +58,7 @@ const COLUMN_MAP: Record<string, string> = {
   loginAttempts: "login_attempts",
   lockUntil: "lock_until",
   phoneNumber: "phone_number",
+  tag: "tag",
   isMfaEnabled: "is_mfa_enabled",
   mfaSecret: "mfa_secret",
   emailVerified: "email_verified",
@@ -79,6 +81,7 @@ function mapRow(row: RowDataPacket): User {
     loginAttempts: row.login_attempts,
     lockUntil: row.lock_until ?? undefined,
     phoneNumber: row.phone_number ?? undefined,
+    tag: row.tag ?? undefined,
     isMfaEnabled: Boolean(row.is_mfa_enabled),
     mfaSecret: row.mfa_secret ?? undefined,
     emailVerified: Boolean(row.email_verified),
@@ -157,6 +160,27 @@ export class UserRepository {
       [phoneNumber],
     );
     return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
+  }
+
+  static async findByTag(tag: string): Promise<User | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM users WHERE tag = ?",
+      [tag.startsWith("@") ? tag.slice(1) : tag],
+    );
+    return rows.length > 0 ? mapRow(rows[0] as RowDataPacket) : null;
+  }
+
+  static async searchByTag(query: string): Promise<User[]> {
+    const q = (query.startsWith("@") ? query.slice(1) : query).toLowerCase();
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM users WHERE tag LIKE ? LIMIT 10",
+      [`${q}%`],
+    );
+    return rows.map(r => mapRow(r as RowDataPacket));
+  }
+
+  static async setTag(id: string, tag: string): Promise<void> {
+    await pool.execute("UPDATE users SET tag = ? WHERE id = ?", [tag, id]);
   }
 
   static async findAll(): Promise<User[]> {

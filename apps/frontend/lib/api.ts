@@ -132,6 +132,8 @@ export interface PublicUser {
   profilePicture?: string | null;
   lastLogin?: string | null;
   createdAt?: string;
+  tag?: string;
+  avatar?: string | null;
 }
 
 export interface Account {
@@ -213,6 +215,49 @@ export interface Card {
 export interface CardRevealed extends Card {
   cardNumber: string;
   cvv: string;
+}
+
+export interface Contact {
+  id: string;
+  ownerUserId: string;
+  contactUserId?: string;
+  nickname?: string;
+  accountNumber?: string;
+  sortCode?: string;
+  tag?: string;
+  createdAt: string;
+}
+
+export interface SplitParticipant {
+  id: string;
+  splitRequestId: string;
+  userId?: string;
+  accountNumber?: string;
+  amount: number;
+  status: "pending" | "paid" | "declined";
+  paidAt?: string;
+}
+
+export interface SplitRequest {
+  id: string;
+  initiatorUserId: string;
+  totalAmount: number;
+  description?: string;
+  status: "pending" | "completed" | "cancelled";
+  createdAt: string;
+  participants?: SplitParticipant[];
+}
+
+export interface PaymentRequest {
+  id: string;
+  requesterUserId: string;
+  payerAccountNumber?: string;
+  payerUserId?: string;
+  amount: number;
+  description?: string;
+  status: "pending" | "paid" | "declined" | "expired";
+  expiresAt?: string;
+  createdAt: string;
 }
 
 export interface MerchantBlock {
@@ -495,6 +540,34 @@ export const api = {
         }),
       delete: (blockId: string) =>
         request(`/merchant-blocks/${blockId}`, { method: "DELETE" }),
+    },
+  },
+
+  social: {
+    searchUsers: (tag: string) =>
+      request<{ status: string; data: { users: PublicUser[] } }>(`/users/search?tag=${encodeURIComponent(tag)}`),
+
+    contacts: {
+      list: () => request<{ status: string; data: { contacts: Contact[] } }>("/contacts"),
+      create: (body: { nickname?: string; accountNumber?: string; sortCode?: string; tag?: string }) =>
+        request<{ status: string; data: { contact: Contact } }>("/contacts", { method: "POST", body: JSON.stringify(body) }),
+      delete: (id: string) => request(`/contacts/${id}`, { method: "DELETE" }),
+    },
+
+    splits: {
+      list: () => request<{ status: string; data: { splits: SplitRequest[] } }>("/splits"),
+      create: (body: { totalAmount: number; description?: string; participants: Array<{ userId?: string; accountNumber?: string; amount: number }> }) =>
+        request<{ status: string; data: { split: SplitRequest } }>("/splits", { method: "POST", body: JSON.stringify(body) }),
+      pay: (id: string) => request(`/splits/${id}/pay`, { method: "POST" }),
+      decline: (id: string) => request(`/splits/${id}/decline`, { method: "POST" }),
+    },
+
+    paymentRequests: {
+      list: () => request<{ status: string; data: { requests: PaymentRequest[] } }>("/payment-requests"),
+      create: (body: { payerAccountNumber: string; amount: number; description?: string }) =>
+        request<{ status: string; data: { request: PaymentRequest } }>("/payment-requests", { method: "POST", body: JSON.stringify(body) }),
+      pay: (id: string) => request(`/payment-requests/${id}/pay`, { method: "POST" }),
+      decline: (id: string) => request(`/payment-requests/${id}/decline`, { method: "POST" }),
     },
   },
 

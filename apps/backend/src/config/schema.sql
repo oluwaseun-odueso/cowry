@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `login_attempts`   INT                                    NOT NULL DEFAULT 0,
   `lock_until`       DATETIME                               NULL,
   `phone_number`     VARCHAR(20)                            NOT NULL,
+  `tag`              VARCHAR(32)                            NULL,
   `is_mfa_enabled`   TINYINT(1)                             NOT NULL DEFAULT 0,
   `mfa_secret`       VARCHAR(255)                           NULL,
   `email_verified`   TINYINT(1)                             NOT NULL DEFAULT 0,
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_users_email`        (`email`),
   UNIQUE KEY `uq_users_google_id`    (`google_id`),
-  UNIQUE KEY `uq_users_phone_number` (`phone_number`)
+  UNIQUE KEY `uq_users_phone_number` (`phone_number`),
+  UNIQUE KEY `uq_users_tag`          (`tag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `email_verifications` (
@@ -147,6 +149,70 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   CONSTRAINT `fk_transactions_account`
     FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Sprint 5: Social features ──────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS `contacts` (
+  `id`               CHAR(36)     NOT NULL,
+  `owner_user_id`    CHAR(36)     NOT NULL,
+  `contact_user_id`  CHAR(36)     NULL,
+  `nickname`         VARCHAR(100) NULL,
+  `account_number`   VARCHAR(8)   NULL,
+  `sort_code`        VARCHAR(6)   NULL,
+  `tag`              VARCHAR(32)  NULL,
+  `created_at`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_contacts_owner` (`owner_user_id`),
+  CONSTRAINT `fk_contacts_owner`
+    FOREIGN KEY (`owner_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_contacts_contact`
+    FOREIGN KEY (`contact_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `split_requests` (
+  `id`                CHAR(36)                                    NOT NULL,
+  `initiator_user_id` CHAR(36)                                    NOT NULL,
+  `total_amount`      DECIMAL(15,2)                               NOT NULL,
+  `description`       VARCHAR(255)                                NULL,
+  `status`            ENUM('pending','completed','cancelled')     NOT NULL DEFAULT 'pending',
+  `created_at`        DATETIME                                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_split_requests_initiator` (`initiator_user_id`),
+  CONSTRAINT `fk_split_requests_initiator`
+    FOREIGN KEY (`initiator_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `split_participants` (
+  `id`               CHAR(36)                                NOT NULL,
+  `split_request_id` CHAR(36)                                NOT NULL,
+  `user_id`          CHAR(36)                                NULL,
+  `account_number`   VARCHAR(8)                              NULL,
+  `amount`           DECIMAL(15,2)                           NOT NULL,
+  `status`           ENUM('pending','paid','declined')       NOT NULL DEFAULT 'pending',
+  `paid_at`          DATETIME                                NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_split_participants_request` (`split_request_id`),
+  CONSTRAINT `fk_split_participants_request`
+    FOREIGN KEY (`split_request_id`) REFERENCES `split_requests` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `payment_requests` (
+  `id`                  CHAR(36)                                        NOT NULL,
+  `requester_user_id`   CHAR(36)                                        NOT NULL,
+  `payer_account_number` VARCHAR(8)                                     NULL,
+  `payer_user_id`       CHAR(36)                                        NULL,
+  `amount`              DECIMAL(15,2)                                   NOT NULL,
+  `description`         VARCHAR(255)                                    NULL,
+  `status`              ENUM('pending','paid','declined','expired')     NOT NULL DEFAULT 'pending',
+  `expires_at`          DATETIME                                        NULL,
+  `created_at`          DATETIME                                        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_payment_requests_requester` (`requester_user_id`),
+  CONSTRAINT `fk_payment_requests_requester`
+    FOREIGN KEY (`requester_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── User tags (Sprint 5) ─────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS `cards` (
   `id`            CHAR(36)                                                    NOT NULL,

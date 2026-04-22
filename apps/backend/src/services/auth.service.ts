@@ -59,6 +59,17 @@ export class AuthService {
       role: UserRole.USER,
     });
 
+    // Auto-generate a unique @tag (firstName + 4 random digits, e.g. @tim4821)
+    let tag: string;
+    let attempts = 0;
+    do {
+      const suffix = String(Math.floor(1000 + Math.random() * 9000));
+      tag = `${userData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}${suffix}`;
+      const existing = await UserRepository.findByTag(tag);
+      if (!existing) break;
+    } while (++attempts < 10);
+    await UserRepository.setTag(user.id, tag);
+
     // Log the registration in fraud alerts (for audit)
     await FraudAlertRepository.create({
       userId: user.id,
