@@ -197,6 +197,31 @@ export interface FraudAlert {
   createdAt: string;
 }
 
+export interface Card {
+  id: string;
+  accountId: string;
+  cardType: "debit" | "prepaid" | "disposable";
+  lastFour: string;
+  expiryMonth: number;
+  expiryYear: number;
+  isFrozen: boolean;
+  status: "active" | "frozen" | "blocked" | "cancelled" | "used";
+  isDisposable: boolean;
+  createdAt: string;
+}
+
+export interface CardRevealed extends Card {
+  cardNumber: string;
+  cvv: string;
+}
+
+export interface MerchantBlock {
+  id: string;
+  userId: string;
+  merchantName: string;
+  createdAt: string;
+}
+
 export interface Pagination {
   total: number;
   page: number;
@@ -414,6 +439,63 @@ export const api = {
       request<{ status: string; data: { transaction: Transaction } }>(
         `/transactions/${id}`,
       ),
+  },
+
+  cards: {
+    list: (accountId: string) =>
+      request<{ status: string; data: { cards: Card[] } }>(`/accounts/${accountId}/cards`),
+
+    issue: (accountId: string) =>
+      request<{ status: string; data: { card: Card } }>(`/accounts/${accountId}/cards`, { method: "POST" }),
+
+    issueDisposable: (accountId: string) =>
+      request<{ status: string; data: { card: Card } }>(`/accounts/${accountId}/cards/disposable`, { method: "POST" }),
+
+    get: (cardId: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}`),
+
+    reveal: (cardId: string, otpToken: string) =>
+      request<{ status: string; data: { card: CardRevealed } }>(`/cards/${cardId}/reveal`, {
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    freeze: (cardId: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/freeze`, { method: "POST" }),
+
+    unfreeze: (cardId: string, otpToken: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/unfreeze`, {
+        method: "POST",
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    block: (cardId: string, otpToken: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/block`, {
+        method: "POST",
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    unblock: (cardId: string, otpToken: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/unblock`, {
+        method: "POST",
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    cancel: (cardId: string, otpToken: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/cancel`, {
+        method: "POST",
+        headers: { "X-OTP-Token": otpToken },
+      }),
+
+    merchantBlocks: {
+      list: () => request<{ status: string; data: { blocks: MerchantBlock[] } }>("/merchant-blocks"),
+      create: (merchantName: string) =>
+        request<{ status: string; data: { block: MerchantBlock } }>("/merchant-blocks", {
+          method: "POST",
+          body: JSON.stringify({ merchantName }),
+        }),
+      delete: (blockId: string) =>
+        request(`/merchant-blocks/${blockId}`, { method: "DELETE" }),
+    },
   },
 
   admin: {

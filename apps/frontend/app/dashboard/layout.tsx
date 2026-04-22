@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   User,
+  Wallet,
   X,
 } from "lucide-react";
 import { CowryLogo } from "@/components/cowry-logo";
@@ -22,6 +23,7 @@ import styles from "./layout.module.css";
 const NAV = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/dashboard/accounts", icon: CreditCard },
+  { label: "Cards", href: "/dashboard/cards", icon: Wallet },
   { label: "Profile", href: "/dashboard/profile", icon: User },
   { label: "Security", href: "/dashboard/security", icon: Shield },
 ];
@@ -29,6 +31,7 @@ const NAV = [
 const BREADCRUMB: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/accounts": "Accounts",
+  "/dashboard/cards": "Cards",
   "/dashboard/profile": "Profile",
   "/dashboard/security": "Security",
   "/dashboard/admin": "Admin",
