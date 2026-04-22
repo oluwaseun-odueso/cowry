@@ -148,6 +148,36 @@ CREATE TABLE IF NOT EXISTS `transactions` (
     FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `cards` (
+  `id`            CHAR(36)                                                    NOT NULL,
+  `account_id`    CHAR(36)                                                    NOT NULL,
+  `card_type`     ENUM('debit','prepaid','disposable')                        NOT NULL DEFAULT 'debit',
+  `card_number`   TEXT                                                        NOT NULL,
+  `last_four`     VARCHAR(4)                                                  NOT NULL,
+  `expiry_month`  TINYINT                                                     NOT NULL,
+  `expiry_year`   SMALLINT                                                    NOT NULL,
+  `cvv`           TEXT                                                        NOT NULL,
+  `is_frozen`     TINYINT(1)                                                  NOT NULL DEFAULT 0,
+  `status`        ENUM('active','frozen','blocked','cancelled','used')        NOT NULL DEFAULT 'active',
+  `is_disposable` TINYINT(1)                                                  NOT NULL DEFAULT 0,
+  `created_at`    DATETIME                                                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_cards_account_id` (`account_id`),
+  CONSTRAINT `fk_cards_account`
+    FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `merchant_blocks` (
+  `id`            CHAR(36)     NOT NULL,
+  `user_id`       CHAR(36)     NOT NULL,
+  `merchant_name` VARCHAR(255) NOT NULL,
+  `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_merchant_block` (`user_id`, `merchant_name`),
+  CONSTRAINT `fk_merchant_blocks_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `otp_codes` (
   `id`         CHAR(36)     NOT NULL,
   `user_id`    CHAR(36)     NOT NULL,
