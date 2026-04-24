@@ -66,6 +66,26 @@ export interface Transfer {
   createdAt: Date;
 }
 
+export enum OtpAction {
+  LARGE_TRANSFER  = "large_transfer",
+  CHANGE_PASSWORD = "change_password",
+  UNFREEZE_CARD   = "unfreeze_card",
+  CANCEL_CARD     = "cancel_card",
+  DISABLE_MFA     = "disable_mfa",
+  REVEAL_CARD     = "reveal_card",
+  UNBLOCK_CARD    = "unblock_card",
+}
+
+export const OTP_ACTION_LABELS: Record<OtpAction, string> = {
+  [OtpAction.LARGE_TRANSFER]:  "a large transfer",
+  [OtpAction.CHANGE_PASSWORD]: "a password change",
+  [OtpAction.UNFREEZE_CARD]:   "unfreezing your card",
+  [OtpAction.CANCEL_CARD]:     "cancelling your card",
+  [OtpAction.DISABLE_MFA]:     "disabling two-factor authentication",
+  [OtpAction.REVEAL_CARD]:     "viewing your full card details",
+  [OtpAction.UNBLOCK_CARD]:    "unblocking your card",
+};
+
 export enum FraudRiskLevel {
   LOW = "low",
   MEDIUM = "medium",

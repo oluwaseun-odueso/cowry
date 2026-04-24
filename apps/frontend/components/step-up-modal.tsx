@@ -2,17 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, ShieldAlert, X } from "lucide-react";
+import { OTP_ACTION_LABELS, OtpAction } from "@cowry/types";
 import styles from "./step-up-modal.module.css";
-
-const ACTION_LABELS: Record<string, string> = {
-  large_transfer:  "a transfer over £500",
-  change_password: "a password change",
-  unfreeze_card:   "unfreezing your card",
-  cancel_card:     "cancelling your card",
-  disable_mfa:     "disabling two-factor authentication",
-  reveal_card:     "viewing your full card details",
-  unblock_card:    "unblocking your card",
-};
 
 interface StepUpModalProps {
   isOpen: boolean;
@@ -38,7 +29,7 @@ export function StepUpModal({ isOpen, action, error, verifying, onSubmit, onDism
 
   if (!isOpen) return null;
 
-  const label = ACTION_LABELS[action] ?? "this action";
+  const label = OTP_ACTION_LABELS[action as OtpAction] ?? "this action";
 
   function handleCodeChange(value: string) {
     setCode(value.replace(/\D/g, "").slice(0, 6));
@@ -61,7 +52,7 @@ export function StepUpModal({ isOpen, action, error, verifying, onSubmit, onDism
 
         <h2 className={styles.title}>Security check</h2>
         <p className={styles.desc}>
-          For your security, we&apos;ve sent a 6-digit code to your phone number.
+          For your security, we&apos;ve sent a 6-digit code to your email address.
           Enter it to confirm {label}.
         </p>
 
