@@ -180,7 +180,7 @@ export class AuthService {
     }
 
     // Check if email is verified
-    if (!user.emailVerified && process.env.NODE_ENV === "production") {
+    if (!user.emailVerified) {
       throw new Error("Please verify your email before logging in");
     }
 

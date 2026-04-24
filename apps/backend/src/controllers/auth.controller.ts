@@ -9,8 +9,8 @@ import geoip from 'geoip-lite';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { OtpAction } from '@cowry/types';
 import { OtpCodeRepository } from '../models/otpCode';
-import { sendOtpSms } from '../services/twilio.service';
 
 export class AuthController {
   private authService: AuthService;
@@ -454,7 +454,7 @@ export class AuthController {
   requestOtp = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { action } = req.body;
-      const validActions = ['large_transfer', 'change_password', 'unfreeze_card', 'cancel_card', 'disable_mfa', 'reveal_card', 'unblock_card'];
+      const validActions = Object.values(OtpAction) as string[];
       if (!action || !validActions.includes(action)) {
         return res.status(400).json({ status: 'error', message: 'Invalid action.' });
       }
@@ -467,7 +467,7 @@ export class AuthController {
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       await OtpCodeRepository.create(user.id, action, codeHash, expiresAt);
-      await sendOtpSms(user.phoneNumber, code, action);
+      await emailService.sendOtpEmail(user.email, user.firstName, code, action as OtpAction);
 
       return res.status(200).json({ status: 'success', data: { sent: true } });
     } catch (error: any) {
