@@ -51,6 +51,9 @@ export class AuthController {
         await emailService.sendVerificationEmail(email, firstName, verificationToken);
       } catch (emailError: any) {
         console.error('Failed to send verification email:', emailError.message);
+        // Dev fallback: log the verification link so registration can be tested without email
+        const devLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+        console.warn(`[DEV] Verify email manually: ${devLink}`);
       }
       return res.status(201).json({
         status: 'success',

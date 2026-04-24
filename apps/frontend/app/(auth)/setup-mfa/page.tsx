@@ -46,6 +46,12 @@ export default function SetupMfaPage() {
       // Refresh profile so isMfaEnabled is updated in auth context
       const profile = await api.auth.getProfile();
       setUser(profile.data.user);
+      // Create the default savings account now that MFA is enabled
+      try {
+        await api.accounts.create({ type: "savings" });
+      } catch {
+        // Account may already exist — ignore
+      }
       setStep("backup");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code. Please try again.");

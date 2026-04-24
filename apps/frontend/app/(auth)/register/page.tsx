@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { MailCheck, Eye, EyeOff, Loader2 } from "lucide-react";
 import { CowryLogo } from "@/components/cowry-logo";
 import { api, ApiError } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
 import styles from "./page.module.css";
 
 const INITIAL = { firstName: "", lastName: "", email: "", phoneNumber: "", password: "" };
@@ -26,12 +24,11 @@ function strengthScore(pw: string): number {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { login } = useAuth();
   const [form, setForm] = useState(INITIAL);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const set = (key: FieldKey, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -41,28 +38,34 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await api.auth.register(form);
-
-      if (res.data.accessToken) {
-        localStorage.setItem("accessToken", res.data.accessToken);
-
-        try {
-          await api.accounts.create({ type: "savings" });
-        } catch (accountErr) {
-          console.error("Auto account creation failed:", accountErr);
-        }
-
-        login(
-          { accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "" },
-          res.data.user,
-        );
-        router.push("/dashboard");
-      }
+      await api.auth.register(form);
+      setRegisteredEmail(form.email);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (registeredEmail) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.brand}>
+          <CowryLogo />
+        </div>
+        <div className={styles.successWrap}>
+          <div className={styles.successIcon}><MailCheck size={32} /></div>
+          <h1 className={styles.title}>Check your inbox</h1>
+          <p className={styles.subtitle}>
+            We sent a verification link to <strong>{registeredEmail}</strong>. Click it to activate your account, then come back to sign in.
+          </p>
+          <p className={styles.footer}>
+            Already verified?{" "}
+            <Link href="/login" className={styles.footerLink}>Sign in</Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
