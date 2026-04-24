@@ -36,12 +36,12 @@ export default function VerifyMfaPage({
     setLoading(true);
     try {
       const res = await api.auth.verifyMfa({ challengeToken, code: finalCode });
-      if (res.data.accessToken && res.data.refreshToken) {
+      if (res.data.accessToken) {
         login(
-          { accessToken: res.data.accessToken, refreshToken: res.data.refreshToken },
+          { accessToken: res.data.accessToken, refreshToken: res.data.refreshToken ?? "" },
           res.data.user,
         );
-        router.push("/dashboard");
+        router.push(res.data.user.isMfaEnabled ? "/dashboard" : "/setup-mfa");
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code. Please try again.");
