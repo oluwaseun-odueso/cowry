@@ -134,6 +134,26 @@ export class ValidationMiddleware {
   ];
 
   /**
+   * Update profile — firstName, lastName, phoneNumber (all optional, at least one required)
+   */
+  static updateProfileRules: ValidationChain[] = [
+    body('firstName')
+      .optional()
+      .notEmpty().withMessage('First name cannot be blank')
+      .isLength({ max: 50 }).withMessage('First name cannot exceed 50 characters')
+      .matches(/^[A-Za-z\s\-']+$/).withMessage('First name can only contain letters, spaces, hyphens, and apostrophes'),
+    body('lastName')
+      .optional()
+      .notEmpty().withMessage('Last name cannot be blank')
+      .isLength({ max: 50 }).withMessage('Last name cannot exceed 50 characters')
+      .matches(/^[A-Za-z\s\-']+$/).withMessage('Last name can only contain letters, spaces, hyphens, and apostrophes'),
+    body('phoneNumber')
+      .optional()
+      .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,4}$/)
+      .withMessage('Please provide a valid phone number'),
+  ];
+
+  /**
    * Verify email — accepts the plain-text token from the verification link
    */
   static verifyEmailRules: ValidationChain[] = [

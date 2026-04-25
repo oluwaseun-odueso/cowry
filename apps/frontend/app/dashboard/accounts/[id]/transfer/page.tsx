@@ -22,7 +22,9 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
   const [account, setAccount] = useState<Account | null>(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
 
+  const [toSortCode, setToSortCode] = useState("");
   const [toAccountNumber, setToAccountNumber] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
@@ -40,8 +42,12 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
   function handleReview(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parseFloat(amount);
+    const normSortCode = toSortCode.replace(/-/g, "").trim();
+    if (!normSortCode) { setError("Enter the recipient's sort code."); return; }
+    if (!/^\d{6}$/.test(normSortCode)) { setError("Sort code must be 6 digits (e.g. 40-00-01)."); return; }
     if (!toAccountNumber.trim()) { setError("Enter the recipient's account number."); return; }
-    if (!/^\d{6,20}$/.test(toAccountNumber.trim())) { setError("Account number must be digits only (6–20 characters)."); return; }
+    if (!/^\d{8}$/.test(toAccountNumber.trim())) { setError("Account number must be exactly 8 digits."); return; }
+    if (!recipientName.trim()) { setError("Enter the recipient's name."); return; }
     if (account && toAccountNumber.trim() === account.accountNumber) { setError("You cannot transfer to your own account."); return; }
     if (!parsed || parsed < 0.01) { setError("Enter a valid amount (min 0.01)."); return; }
     if (account && parsed > account.balance) {
@@ -57,7 +63,9 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
     setError("");
     try {
       const { data } = await api.accounts.transfer(id, {
+        toSortCode: toSortCode.replace(/-/g, "").trim(),
         toAccountNumber: toAccountNumber.trim(),
+        recipientName: recipientName.trim(),
         amount: parseFloat(amount),
         ...(description.trim() ? { description: description.trim() } : {}),
       });
@@ -126,7 +134,17 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
               <span className={styles.metaValue}>••••{account.accountNumber.slice(-4)}</span>
             </div>
             <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>To account</span>
+              <span className={styles.metaLabel}>Recipient name</span>
+              <span className={styles.metaValue}>{recipientName.trim()}</span>
+            </div>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Sort code</span>
+              <span className={`${styles.metaValue} ${styles.metaId}`}>
+                {toSortCode.replace(/-/g, "").replace(/(\d{2})(\d{2})(\d{2})/, "$1-$2-$3")}
+              </span>
+            </div>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Account number</span>
               <span className={`${styles.metaValue} ${styles.metaId}`}>{toAccountNumber.trim()}</span>
             </div>
             <div className={styles.metaRow}>
@@ -190,19 +208,47 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
 
         <form onSubmit={handleReview} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Recipient account number</label>
+            <label className={styles.label}>Recipient name</label>
             <input
               type="text"
-              inputMode="numeric"
-              value={toAccountNumber}
-              onChange={(e) => { setToAccountNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
+              value={recipientName}
+              onChange={(e) => { setRecipientName(e.target.value); setError(""); }}
               className={styles.input}
-              placeholder="e.g. 2259866425"
-              maxLength={20}
+              placeholder="e.g. Ada Lovelace"
+              maxLength={100}
               required
             />
-            <p className={styles.fieldHint}>The 10-digit account number shown on the recipient&apos;s account card.</p>
           </div>
+
+          <div className={styles.twoCol}>
+            <div className={styles.field}>
+              <label className={styles.label}>Sort code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={toSortCode}
+                onChange={(e) => { setToSortCode(e.target.value); setError(""); }}
+                className={styles.input}
+                placeholder="40-00-01"
+                maxLength={8}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Account number</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={toAccountNumber}
+                onChange={(e) => { setToAccountNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
+                className={styles.input}
+                placeholder="e.g. 12345678"
+                maxLength={8}
+                required
+              />
+            </div>
+          </div>
+          <p className={styles.fieldHint}>The 8-digit account number shown on the recipient&apos;s account card.</p>
 
           <div className={styles.field}>
             <label className={styles.label}>Amount</label>

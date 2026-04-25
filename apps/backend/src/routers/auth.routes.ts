@@ -176,6 +176,18 @@ router.get(
 );
 
 /**
+ * @route PATCH /api/v1/auth/profile
+ * @desc Update authenticated user's firstName, lastName, or phoneNumber
+ * @access Private
+ */
+router.patch(
+  '/profile',
+  AuthMiddleware.authenticate,
+  ValidationMiddleware.validate(ValidationMiddleware.updateProfileRules),
+  authController.updateProfile
+);
+
+/**
  * @route GET /api/v1/auth/sessions
  * @desc List all active sessions for the authenticated user
  * @access Private

@@ -240,6 +240,7 @@ export interface SplitParticipant {
 
 export interface SplitRequest {
   id: string;
+  reference: string;
   initiatorUserId: string;
   totalAmount: number;
   description?: string;
@@ -250,6 +251,7 @@ export interface SplitRequest {
 
 export interface PaymentRequest {
   id: string;
+  reference: string;
   requesterUserId: string;
   payerAccountNumber?: string;
   payerUserId?: string;
@@ -411,6 +413,12 @@ export const api = {
         body: JSON.stringify({ avatar }),
       }),
 
+    updateProfile: (body: { firstName?: string; lastName?: string; phoneNumber?: string }) =>
+      request<{ status: string; data: { user: PublicUser } }>("/auth/profile", {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+
     sessions: () =>
       request<{ status: string; data: { sessions: Session[] } }>(
         "/auth/sessions",
@@ -455,7 +463,7 @@ export const api = {
 
     transfer: (
       id: string,
-      body: { toAccountNumber: string; amount: number; description?: string },
+      body: { toSortCode: string; toAccountNumber: string; recipientName: string; amount: number; description?: string },
     ) =>
       request<{
         status: string;
@@ -576,13 +584,13 @@ export const api = {
       list: () => request<{ status: string; data: { splits: SplitRequest[] } }>("/splits"),
       create: (body: { totalAmount: number; description?: string; participants: Array<{ userId?: string; accountNumber?: string; amount: number }> }) =>
         request<{ status: string; data: { split: SplitRequest } }>("/splits", { method: "POST", body: JSON.stringify(body) }),
-      pay: (id: string) => request(`/splits/${id}/pay`, { method: "POST" }),
+      pay: (id: string) => request<{ status: string; data: { split: SplitRequest } }>(`/splits/${id}/pay`, { method: "POST" }),
       decline: (id: string) => request(`/splits/${id}/decline`, { method: "POST" }),
     },
 
     paymentRequests: {
       list: () => request<{ status: string; data: { requests: PaymentRequest[] } }>("/payment-requests"),
-      create: (body: { payerAccountNumber: string; amount: number; description?: string }) =>
+      create: (body: { payerSortCode: string; payerAccountNumber: string; amount: number; description?: string }) =>
         request<{ status: string; data: { request: PaymentRequest } }>("/payment-requests", { method: "POST", body: JSON.stringify(body) }),
       pay: (id: string) => request(`/payment-requests/${id}/pay`, { method: "POST" }),
       decline: (id: string) => request(`/payment-requests/${id}/decline`, { method: "POST" }),

@@ -12,6 +12,7 @@ export default function RequestPage() {
   const [showForm, setShowForm] = useState(false);
 
   // Form state
+  const [payerSortCode, setPayerSortCode] = useState("");
   const [payerAccountNumber, setPayerAccountNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -25,17 +26,18 @@ export default function RequestPage() {
   }, []);
 
   async function createRequest() {
-    if (!payerAccountNumber.trim() || !amount) return;
+    if (!payerSortCode.trim() || !payerAccountNumber.trim() || !amount) return;
     setCreating(true);
     try {
       const res = await api.social.paymentRequests.create({
+        payerSortCode: payerSortCode.replace(/-/g, "").trim(),
         payerAccountNumber: payerAccountNumber.trim(),
         amount: parseFloat(amount),
         description: description.trim() || undefined,
       });
       setRequests(r => [res.data.request, ...r]);
       setShowForm(false);
-      setPayerAccountNumber(""); setAmount(""); setDescription("");
+      setPayerSortCode(""); setPayerAccountNumber(""); setAmount(""); setDescription("");
     } catch (e: any) { setError(e.message); }
     finally { setCreating(false); }
   }
@@ -57,7 +59,6 @@ export default function RequestPage() {
   if (loading) return <div className={styles.loadingShim} />;
 
   const incoming = requests.filter(r => r.status === "pending" && r.payerAccountNumber);
-  const history = requests.filter(r => r.status !== "pending" || !r.payerAccountNumber);
 
   return (
     <div className={styles.page}>
@@ -81,6 +82,17 @@ export default function RequestPage() {
       {showForm && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Send a payment request</h2>
+
+          <div className={styles.formRow}>
+            <label className={styles.label}>Their sort code</label>
+            <input
+              className={styles.field}
+              placeholder="40-00-01"
+              value={payerSortCode}
+              onChange={e => setPayerSortCode(e.target.value)}
+              maxLength={8}
+            />
+          </div>
 
           <div className={styles.formRow}>
             <label className={styles.label}>Their account number</label>
@@ -119,7 +131,7 @@ export default function RequestPage() {
           <button
             className={styles.submitBtn}
             onClick={() => void createRequest()}
-            disabled={creating || !payerAccountNumber.trim() || !amount}
+            disabled={creating || !payerSortCode.trim() || !payerAccountNumber.trim() || !amount}
           >
             <Plus size={15} /> {creating ? "Sending…" : "Send request"}
           </button>
@@ -137,7 +149,7 @@ export default function RequestPage() {
                     <span className={styles.requestAmount}>£{r.amount.toFixed(2)}</span>
                     {r.description && <span className={styles.requestDescription}>{r.description}</span>}
                     <span className={styles.requestMeta}>
-                      Requested {new Date(r.createdAt).toLocaleDateString("en-GB")}
+                      {r.reference} · Requested {new Date(r.createdAt).toLocaleDateString("en-GB")}
                       {r.expiresAt && ` · expires ${new Date(r.expiresAt).toLocaleDateString("en-GB")}`}
                     </span>
                   </div>
@@ -172,7 +184,7 @@ export default function RequestPage() {
                     <span className={styles.requestAmount}>£{r.amount.toFixed(2)}</span>
                     {r.description && <span className={styles.requestDescription}>{r.description}</span>}
                     <span className={styles.requestMeta}>
-                      {new Date(r.createdAt).toLocaleDateString("en-GB")}
+                      {r.reference} · {new Date(r.createdAt).toLocaleDateString("en-GB")}
                       {r.payerAccountNumber && ` · to ${r.payerAccountNumber}`}
                     </span>
                   </div>

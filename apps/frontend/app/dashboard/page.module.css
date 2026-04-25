@@ -292,17 +292,41 @@
   border-radius: 0.625rem;
 }
 
+.txRowWrap {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #F3F3F3;
+}
+.txRowWrap:last-child { border-bottom: none; }
+
 .txRow {
   display: flex;
   align-items: center;
   gap: 0.875rem;
   padding: 1rem 1.25rem;
   text-decoration: none;
-  border-bottom: 1px solid #F3F3F3;
   transition: background 0.15s;
+  border-bottom: none;
 }
-.txRow:last-child { border-bottom: none; }
 .txRow:hover { background: #F9F9FB; }
+
+.splitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #E5E7EB;
+  background: #FAFBFF;
+  color: #252B65;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  transition: border-color 0.15s, background 0.15s;
+}
+.splitBtn:hover { border-color: #252B65; background: #F0F2FF; }
 
 .txIcon {
   width: 2.25rem;

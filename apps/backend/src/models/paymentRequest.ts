@@ -4,6 +4,7 @@ import pool from '../config/database';
 
 export interface PaymentRequest {
   id: string;
+  reference: string;
   requesterUserId: string;
   payerAccountNumber?: string;
   payerUserId?: string;
@@ -14,9 +15,17 @@ export interface PaymentRequest {
   createdAt: Date;
 }
 
+function generateReference(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let ref = 'PAY';
+  for (let i = 0; i < 6; i++) ref += chars[Math.floor(Math.random() * chars.length)];
+  return ref;
+}
+
 function mapRow(r: RowDataPacket): PaymentRequest {
   return {
     id: r.id,
+    reference: r.reference,
     requesterUserId: r.requester_user_id,
     payerAccountNumber: r.payer_account_number ?? undefined,
     payerUserId: r.payer_user_id ?? undefined,
@@ -38,11 +47,12 @@ export class PaymentRequestRepository {
     expiresAt?: Date;
   }): Promise<PaymentRequest> {
     const id = uuidv4();
+    const reference = generateReference();
     const expiresAt = data.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 day default
     await pool.execute<ResultSetHeader>(
-      `INSERT INTO payment_requests (id, requester_user_id, payer_account_number, payer_user_id, amount, description, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.requesterUserId, data.payerAccountNumber ?? null, data.payerUserId ?? null,
+      `INSERT INTO payment_requests (id, reference, requester_user_id, payer_account_number, payer_user_id, amount, description, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, reference, data.requesterUserId, data.payerAccountNumber ?? null, data.payerUserId ?? null,
        data.amount, data.description ?? null, expiresAt]
     );
     return (await PaymentRequestRepository.findById(id))!;

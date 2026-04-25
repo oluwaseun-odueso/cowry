@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, SplitSquareHorizontal, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { api, Account, Transaction } from "@/lib/api";
 import styles from "./page.module.css";
@@ -155,21 +155,32 @@ export default function DashboardPage() {
             </div>
           ) : (
             recentTxs.map((tx) => (
-              <Link key={tx.id} href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
-                <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
-                  {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
-                </div>
-                <div className={styles.txInfo}>
-                  <p className={styles.txRef}>{tx.reference}</p>
-                  {tx.description && <p className={styles.txDesc}>{tx.description}</p>}
-                </div>
-                <div className={styles.txRight}>
-                  <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
-                    {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, tx.accountCurrency)}
-                  </p>
-                  <p className={styles.txTime}>{timeAgo(tx.createdAt)}</p>
-                </div>
-              </Link>
+              <div key={tx.id} className={styles.txRowWrap}>
+                <Link href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
+                  <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
+                    {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
+                  </div>
+                  <div className={styles.txInfo}>
+                    <p className={styles.txRef}>{tx.reference}</p>
+                    {tx.description && <p className={styles.txDesc}>{tx.description}</p>}
+                  </div>
+                  <div className={styles.txRight}>
+                    <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
+                      {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, tx.accountCurrency)}
+                    </p>
+                    <p className={styles.txTime}>{timeAgo(tx.createdAt)}</p>
+                  </div>
+                </Link>
+                {tx.type === "debit" && (
+                  <Link
+                    href={`/dashboard/split?amount=${tx.amount}&description=${encodeURIComponent(tx.description ?? tx.reference)}`}
+                    className={styles.splitBtn}
+                  >
+                    <SplitSquareHorizontal size={13} />
+                    Split bill
+                  </Link>
+                )}
+              </div>
             ))
           )}
         </div>

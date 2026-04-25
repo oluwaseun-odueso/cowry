@@ -94,9 +94,17 @@ export default function AccountsPage() {
               </div>
 
               <div className={styles.cardBottom}>
-                <div>
-                  <p className={styles.accountNumberLabel}>Account number</p>
-                  <p className={styles.accountNumber}>{account.accountNumber}</p>
+                <div className={styles.accountNums}>
+                  <div>
+                    <p className={styles.accountNumberLabel}>Sort code</p>
+                    <p className={styles.accountNumber}>
+                      {(account.sortCode ?? "400001").replace(/(\d{2})(\d{2})(\d{2})/, "$1-$2-$3")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={styles.accountNumberLabel}>Account number</p>
+                    <p className={styles.accountNumber}>{account.accountNumber}</p>
+                  </div>
                 </div>
                 <p className={styles.cardDate}>
                   Since {new Date(account.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}

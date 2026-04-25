@@ -226,13 +226,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button className={styles.bellBtn} aria-label="Notifications">
             <Bell size={18} />
           </button>
-          <div className={styles.topDivider} aria-hidden />
-          <div
-            className={styles.avatar}
-            title={user ? `${user.firstName} ${user.lastName}` : ""}
-          >
-            {initials}
-          </div>
         </div>
       </header>
 
@@ -284,12 +277,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <div className={styles.sidebarFooter}>
           <div className={styles.sidebarUser}>
-            <div className={styles.sidebarAvatar}>{initials}</div>
+            {user?.avatar ? (
+              <Image
+                src={`/images/avatars/${user.avatar}.svg`}
+                alt={`${user.firstName}'s avatar`}
+                width={36}
+                height={36}
+                className={styles.sidebarAvatarImg}
+              />
+            ) : (
+              <div className={styles.sidebarAvatar}>{initials}</div>
+            )}
             <div className={styles.sidebarUserInfo}>
               <p className={styles.sidebarUserName}>
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className={styles.sidebarUserEmail}>{user?.email}</p>
+              <p className={styles.sidebarUserEmail}>
+                {user?.tag ? `@${user.tag}` : user?.email}
+              </p>
             </div>
           </div>
           <button onClick={handleLogout} className={styles.signOutBtn}>

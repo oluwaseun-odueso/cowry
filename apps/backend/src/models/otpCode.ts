@@ -32,7 +32,7 @@ export class OtpCodeRepository {
 
   static async findPending(userId: string, action: string): Promise<OtpCode | null> {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT * FROM otp_codes WHERE user_id = ? AND action = ? AND used = 0 AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1`,
+      `SELECT * FROM otp_codes WHERE user_id = ? AND action = ? AND used = 0 AND expires_at > UTC_TIMESTAMP() ORDER BY created_at DESC LIMIT 1`,
       [userId, action]
     );
     if (rows.length === 0) return null;

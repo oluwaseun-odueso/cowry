@@ -76,8 +76,17 @@ export class AccountController {
 
   createTransfer = async (req: Request<{ id: string }>, res: Response): Promise<Response> => {
     try {
-      const { toAccountNumber, amount, description } = req.body;
+      const { toSortCode, toAccountNumber, recipientName, amount, description } = req.body;
       const parsedAmount = parseFloat(amount);
+
+      // Validate sort code belongs to Cowry
+      const normSortCode = String(toSortCode ?? '').replace(/-/g, '');
+      if (!normSortCode || normSortCode !== '400001') {
+        return res.status(400).json({ status: 'error', message: 'Sort code does not belong to a Cowry account.' });
+      }
+      if (!recipientName || !String(recipientName).trim()) {
+        return res.status(400).json({ status: 'error', message: 'Recipient name is required.' });
+      }
 
       // Require step-up OTP for large transfers
       if (parsedAmount > STEP_UP_TRANSFER_THRESHOLD) {

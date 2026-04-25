@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS `contacts` (
 
 CREATE TABLE IF NOT EXISTS `split_requests` (
   `id`                CHAR(36)                                    NOT NULL,
+  `reference`         VARCHAR(12)                                 NOT NULL,
   `initiator_user_id` CHAR(36)                                    NOT NULL,
   `total_amount`      DECIMAL(15,2)                               NOT NULL,
   `description`       VARCHAR(255)                                NULL,
@@ -200,6 +201,7 @@ CREATE TABLE IF NOT EXISTS `split_participants` (
 
 CREATE TABLE IF NOT EXISTS `payment_requests` (
   `id`                  CHAR(36)                                        NOT NULL,
+  `reference`           VARCHAR(12)                                     NOT NULL,
   `requester_user_id`   CHAR(36)                                        NOT NULL,
   `payer_account_number` VARCHAR(8)                                     NULL,
   `payer_user_id`       CHAR(36)                                        NULL,
