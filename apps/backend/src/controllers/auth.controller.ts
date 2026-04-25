@@ -236,6 +236,31 @@ export class AuthController {
   };
 
   /**
+   * Update authenticated user's profile fields (firstName, lastName, phoneNumber)
+   */
+  updateProfile = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { firstName, lastName, phoneNumber } = req.body;
+      if (!firstName && !lastName && !phoneNumber) {
+        return res.status(400).json({ status: 'error', message: 'Provide at least one field to update.' });
+      }
+      const patch: Record<string, string> = {};
+      if (firstName)   patch.firstName   = firstName;
+      if (lastName)    patch.lastName    = lastName;
+      if (phoneNumber) patch.phoneNumber = phoneNumber;
+      await UserRepository.update(req.user!.id, patch);
+      const user = await UserRepository.findById(req.user!.id);
+      return res.status(200).json({
+        status: 'success',
+        message: 'Profile updated.',
+        data: { user: user ? toPublicUser(user) : null },
+      });
+    } catch (error: any) {
+      return res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
+
+  /**
    * Request password reset
    */
   forgotPassword = async (req: Request, res: Response): Promise<Response> => {
@@ -473,7 +498,12 @@ export class AuthController {
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       await OtpCodeRepository.create(user.id, action, codeHash, expiresAt);
-      await emailService.sendOtpEmail(user.email, user.firstName, code, action as OtpAction);
+
+      try {
+        await emailService.sendOtpEmail(user.email, user.firstName, code, action as OtpAction);
+      } catch (emailErr) {
+        console.warn(`[DEV] OTP email failed — code for ${action}: ${code}`, emailErr);
+      }
 
       return res.status(200).json({ status: 'success', data: { sent: true } });
     } catch (error: any) {

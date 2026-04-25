@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Plus, Trash2, X, Users, CheckCircle, XCircle } from "lucide-react";
 import { api, SplitRequest, Contact } from "@/lib/api";
 import styles from "./page.module.css";
@@ -12,16 +12,17 @@ interface Participant {
   label: string;
 }
 
-export default function SplitPage() {
+export default function SplitPage({ searchParams }: { searchParams: Promise<{ amount?: string; description?: string }> }) {
+  const params = use(searchParams);
   const [splits, setSplits] = useState<SplitRequest[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // New split form
-  const [showForm, setShowForm] = useState(false);
-  const [totalAmount, setTotalAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [showForm, setShowForm] = useState(!!params.amount);
+  const [totalAmount, setTotalAmount] = useState(params.amount ?? "");
+  const [description, setDescription] = useState(params.description ?? "");
   const [participants, setParticipants] = useState<Participant[]>([
     { tag: "", accountNumber: "", amount: "", label: "" },
   ]);
@@ -88,11 +89,8 @@ export default function SplitPage() {
 
   async function paySplit(id: string) {
     try {
-      await api.social.splits.pay(id);
-      setSplits(s => s.map(x => {
-        if (x.id !== id) return x;
-        return { ...x, participants: x.participants?.map(p => ({ ...p, status: "paid" as const })) };
-      }));
+      const res = await api.social.splits.pay(id);
+      setSplits(s => s.map(x => x.id !== id ? x : res.data.split));
     } catch (e: any) { setError(e.message); }
   }
 
@@ -248,7 +246,9 @@ export default function SplitPage() {
                 <div className={styles.splitCardHeader}>
                   <div className={styles.splitInfo}>
                     <span className={styles.splitDescription}>{s.description || "Bill split"}</span>
-                    <span className={styles.splitMeta}>£{s.totalAmount.toFixed(2)} total · {new Date(s.createdAt).toLocaleDateString("en-GB")}</span>
+                    <span className={styles.splitMeta}>
+                      {s.reference} · £{s.totalAmount.toFixed(2)} total · {new Date(s.createdAt).toLocaleDateString("en-GB")}
+                    </span>
                   </div>
                   <span className={`${styles.statusBadge} ${styles[s.status]}`}>{s.status}</span>
                 </div>

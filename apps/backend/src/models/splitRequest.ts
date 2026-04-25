@@ -4,6 +4,7 @@ import pool from '../config/database';
 
 export interface SplitRequest {
   id: string;
+  reference: string;
   initiatorUserId: string;
   totalAmount: number;
   description?: string;
@@ -22,9 +23,17 @@ export interface SplitParticipant {
   paidAt?: Date;
 }
 
+function generateReference(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let ref = 'SPL';
+  for (let i = 0; i < 6; i++) ref += chars[Math.floor(Math.random() * chars.length)];
+  return ref;
+}
+
 function mapSplit(r: RowDataPacket): SplitRequest {
   return {
     id: r.id,
+    reference: r.reference,
     initiatorUserId: r.initiator_user_id,
     totalAmount: parseFloat(r.total_amount),
     description: r.description ?? undefined,
@@ -53,12 +62,13 @@ export class SplitRequestRepository {
     participants: Array<{ userId?: string; accountNumber?: string; amount: number }>
   ): Promise<SplitRequest> {
     const id = uuidv4();
+    const reference = generateReference();
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
       await conn.execute(
-        `INSERT INTO split_requests (id, initiator_user_id, total_amount, description) VALUES (?, ?, ?, ?)`,
-        [id, initiatorUserId, totalAmount, description ?? null]
+        `INSERT INTO split_requests (id, reference, initiator_user_id, total_amount, description) VALUES (?, ?, ?, ?, ?)`,
+        [id, reference, initiatorUserId, totalAmount, description ?? null]
       );
       for (const p of participants) {
         await conn.execute(
@@ -106,5 +116,9 @@ export class SplitRequestRepository {
       `UPDATE split_participants SET status = ?, paid_at = ? WHERE id = ?`,
       [status, status === 'paid' ? new Date() : null, participantId]
     );
+  }
+
+  static async updateStatus(id: string, status: SplitRequest['status']): Promise<void> {
+    await pool.execute('UPDATE split_requests SET status = ? WHERE id = ?', [status, id]);
   }
 }

@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowLeft, ArrowUpRight, RefreshCw } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight, RefreshCw, SplitSquareHorizontal } from "lucide-react";
 import { api, Account, Transaction, Pagination } from "@/lib/api";
 import styles from "./page.module.css";
 
@@ -169,24 +169,35 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
             ) : (
               txs.map((tx) => (
-                <Link key={tx.id} href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
-                  <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
-                    {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
-                  </div>
-                  <div className={styles.txInfo}>
-                    <p className={styles.txRef}>{tx.reference}</p>
-                    {tx.description && <p className={styles.txDesc}>{tx.description}</p>}
-                    <p className={styles.txDate}>{fmtDate(tx.createdAt)}</p>
-                  </div>
-                  <div className={styles.txRight}>
-                    <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
-                      {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, account.currency)}
-                    </p>
-                    <span className={`${styles.statusBadge} ${tx.status === "completed" ? styles.statusCompleted : tx.status === "failed" ? styles.statusFailed : styles.statusPending}`}>
-                      {tx.status}
-                    </span>
-                  </div>
-                </Link>
+                <div key={tx.id} className={styles.txRowWrap}>
+                  <Link href={`/dashboard/transactions/${tx.id}`} className={styles.txRow}>
+                    <div className={`${styles.txIcon} ${tx.type === "credit" ? styles.iconTrust : styles.iconPeach}`}>
+                      {tx.type === "credit" ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
+                    </div>
+                    <div className={styles.txInfo}>
+                      <p className={styles.txRef}>{tx.reference}</p>
+                      {tx.description && <p className={styles.txDesc}>{tx.description}</p>}
+                      <p className={styles.txDate}>{fmtDate(tx.createdAt)}</p>
+                    </div>
+                    <div className={styles.txRight}>
+                      <p className={`${styles.txAmount} ${tx.type === "credit" ? styles.txCredit : styles.txDebit}`}>
+                        {tx.type === "credit" ? "+" : "−"}{fmt(tx.amount, account.currency)}
+                      </p>
+                      <span className={`${styles.statusBadge} ${tx.status === "completed" ? styles.statusCompleted : tx.status === "failed" ? styles.statusFailed : styles.statusPending}`}>
+                        {tx.status}
+                      </span>
+                    </div>
+                  </Link>
+                  {tx.type === "debit" && (
+                    <Link
+                      href={`/dashboard/split?amount=${tx.amount}&description=${encodeURIComponent(tx.description ?? tx.reference)}`}
+                      className={styles.splitBtn}
+                    >
+                      <SplitSquareHorizontal size={13} />
+                      Split bill
+                    </Link>
+                  )}
+                </div>
               ))
             )}
           </div>

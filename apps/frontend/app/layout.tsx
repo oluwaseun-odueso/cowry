@@ -11,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Cowry — Banking",
+  title: "Cowry Banking",
   description: "Modern banking at your fingertips",
 };
 
