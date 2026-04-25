@@ -91,6 +91,18 @@
   pointer-events: none;
 }
 
+/* Disposable card — peach gradient */
+.cardVisualDisposable {
+  background: linear-gradient(135deg, #FD6B52 0%, #c44a35 100%);
+  box-shadow: 0 8px 32px rgba(253, 107, 82, 0.35), 0 0 60px rgba(253, 107, 82, 0.15);
+}
+.cardVisualDisposable::before {
+  background: radial-gradient(circle, rgba(255, 220, 200, 0.18) 0%, transparent 65%);
+}
+.cardChipDisposable {
+  background: linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%);
+}
+
 .cardFrozen { filter: saturate(0.4) brightness(0.75); }
 .cardBlocked { filter: saturate(0) brightness(0.6); }
 .cardCancelled { filter: saturate(0) brightness(0.5) opacity(0.7); }
@@ -240,12 +252,13 @@
 .outlineBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Disposable cards list ── */
-.disposableList { display: flex; flex-direction: column; gap: 0.5rem; }
+.disposableList { display: flex; flex-direction: column; gap: 1rem; }
+.disposableCardWrap { display: flex; flex-direction: column; gap: 0.5rem; }
 .disposableRow {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.75rem;
   background: #FAFBFF;
   border: 1px solid #F3F3F3;
   border-radius: 0.75rem;
@@ -268,6 +281,22 @@
 }
 .disposableCancelBtn:hover { background: rgba(239,68,68,0.16); }
 .disposableCancelBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.timerBadge {
+  background: rgba(253, 107, 82, 0.1);
+  color: #FD6B52;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.outlineBtnActive {
+  border-color: rgba(253, 107, 82, 0.4);
+  color: #FD6B52;
+  background: rgba(253, 107, 82, 0.05);
+}
+.outlineBtnActive:hover:not(:disabled) { border-color: rgba(253, 107, 82, 0.6); background: rgba(253, 107, 82, 0.08); }
 .statusPill {
   padding: 0.2rem 0.6rem;
   border-radius: 9999px;
