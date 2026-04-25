@@ -239,13 +239,13 @@
 }
 
 .quickTransfer {
-  background: rgba(35, 22, 77, 0.06);
+  background: rgba(183, 213, 255, 0.15);
   color: #23164D;
-  border-color: rgba(35, 22, 77, 0.12);
+  border-color: rgba(183, 213, 255, 0.45);
 }
 .quickTransfer:hover {
-  background: rgba(35, 22, 77, 0.1);
-  box-shadow: 0 6px 18px rgba(35, 22, 77, 0.18);
+  background: rgba(183, 213, 255, 0.25);
+  box-shadow: 0 6px 18px rgba(183, 213, 255, 0.3);
 }
 
 /* ── Section ── */

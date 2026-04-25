@@ -13,6 +13,7 @@ export interface Card {
   isFrozen: boolean;
   status: 'active' | 'frozen' | 'blocked' | 'cancelled' | 'used';
   isDisposable: boolean;
+  expiresAt?: Date;
   createdAt: Date;
 }
 
@@ -92,6 +93,7 @@ function mapRow(row: RowDataPacket): Card {
     isFrozen: row.is_frozen === 1,
     status: row.status,
     isDisposable: row.is_disposable === 1,
+    expiresAt: row.expires_at ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -105,14 +107,15 @@ export class CardRepository {
     const lastFour = pan.slice(-4);
     const now = new Date();
     const expiryYear = now.getFullYear() + (cardType === 'disposable' ? 0 : 3);
-    // Disposable cards expire in ~24h — set expiry to current month/year (1 day TTL enforced by status)
     const expiryMonth = now.getMonth() + 1;
     const id = uuidv4();
+    // Disposable cards have a 5-minute TTL enforced both by this timestamp and by auto-cancel on the frontend
+    const expiresAt = cardType === 'disposable' ? new Date(Date.now() + 5 * 60 * 1000) : null;
 
     await pool.execute<ResultSetHeader>(
-      `INSERT INTO cards (id, account_id, card_type, card_number, last_four, expiry_month, expiry_year, cvv, is_disposable)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, accountId, cardType, encrypt(pan), lastFour, expiryMonth, expiryYear, encrypt(cvv), cardType === 'disposable' ? 1 : 0]
+      `INSERT INTO cards (id, account_id, card_type, card_number, last_four, expiry_month, expiry_year, cvv, is_disposable, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, accountId, cardType, encrypt(pan), lastFour, expiryMonth, expiryYear, encrypt(cvv), cardType === 'disposable' ? 1 : 0, expiresAt]
     );
 
     return (await CardRepository.findById(id))!;

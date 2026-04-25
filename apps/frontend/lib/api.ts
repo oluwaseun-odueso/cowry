@@ -209,6 +209,7 @@ export interface Card {
   isFrozen: boolean;
   status: "active" | "frozen" | "blocked" | "cancelled" | "used";
   isDisposable: boolean;
+  expiresAt?: string;
   createdAt: string;
 }
 

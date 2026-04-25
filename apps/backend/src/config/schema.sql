@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS `cards` (
   `is_frozen`     TINYINT(1)                                                  NOT NULL DEFAULT 0,
   `status`        ENUM('active','frozen','blocked','cancelled','used')        NOT NULL DEFAULT 'active',
   `is_disposable` TINYINT(1)                                                  NOT NULL DEFAULT 0,
+  `expires_at`    DATETIME                                                    NULL,
   `created_at`    DATETIME                                                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_cards_account_id` (`account_id`),

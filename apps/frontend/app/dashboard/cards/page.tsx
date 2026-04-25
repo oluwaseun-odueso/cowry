@@ -24,16 +24,23 @@ function fmtExpiry(month: number, year: number) {
   return `${String(month).padStart(2, "0")}/${String(year).slice(-2)}`;
 }
 
+function fmtTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function CardVisual({ card, revealed }: { card: Card; revealed: CardRevealed | null }) {
   const isFrozen = card.isFrozen || card.status === "frozen";
   const isBlocked = card.status === "blocked";
   const isCancelled = card.status === "cancelled" || card.status === "used";
+  const isDisposable = card.isDisposable;
 
   return (
-    <div className={`${styles.cardVisual} ${isFrozen ? styles.cardFrozen : ""} ${isBlocked ? styles.cardBlocked : ""} ${isCancelled ? styles.cardCancelled : ""}`}>
-      <div className={styles.cardChip} />
+    <div className={`${styles.cardVisual} ${isDisposable ? styles.cardVisualDisposable : ""} ${isFrozen ? styles.cardFrozen : ""} ${isBlocked ? styles.cardBlocked : ""} ${isCancelled ? styles.cardCancelled : ""}`}>
+      <div className={`${styles.cardChip} ${isDisposable ? styles.cardChipDisposable : ""}`} />
       <div className={styles.cardType}>
-        {card.isDisposable ? "Single-use" : card.cardType === "debit" ? "Debit" : card.cardType}
+        {isDisposable ? "Single-use" : card.cardType === "debit" ? "Debit" : card.cardType}
       </div>
       <div className={styles.cardNumber}>
         {revealed
@@ -65,6 +72,7 @@ export default function CardsPage() {
   const [revealed, setRevealed] = useState<CardRevealed | null>(null);
   const [showingReveal, setShowingReveal] = useState(false);
   const [revealedDisposable, setRevealedDisposable] = useState<Record<string, CardRevealed>>({});
+  const [timeLeft, setTimeLeft] = useState(0); // seconds remaining on active disposable
   const [merchantBlocks, setMerchantBlocks] = useState<MerchantBlock[]>([]);
   const [newMerchant, setNewMerchant] = useState("");
   const [loading, setLoading] = useState(true);
@@ -90,10 +98,39 @@ export default function CardsPage() {
         const [cardRes, blockRes] = results;
         setCards(cardRes.data.cards);
         setMerchantBlocks(blockRes.data.blocks);
+        // Seed timer from any existing active disposable
+        const active = cardRes.data.cards.find(c => c.isDisposable && c.status === "active" && c.expiresAt);
+        if (active?.expiresAt) {
+          setTimeLeft(Math.max(0, Math.floor((new Date(active.expiresAt).getTime() - Date.now()) / 1000)));
+        }
       })
       .catch(() => setError("Failed to load cards."))
       .finally(() => setLoading(false));
   }, []);
+
+  // Countdown timer — ticks while an active disposable exists
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const id = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(id);
+          // Auto-cancel the expired disposable
+          const expired = cards.find(c => c.isDisposable && c.status === "active");
+          if (expired) {
+            api.cards.cancelDisposable(expired.id).then(() => {
+              setCards(c => c.map(x => x.id === expired.id ? { ...x, status: "cancelled" as const } : x));
+              setRevealedDisposable(r => { const copy = { ...r }; delete copy[expired.id]; return copy; });
+            }).catch(() => {});
+          }
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft > 0]);
 
   async function issueCard() {
     if (!accountId) return;
@@ -111,10 +148,10 @@ export default function CardsPage() {
     try {
       const res = await api.cards.issueDisposable(accountId);
       const card = res.data.card;
-      // Add card to list immediately — CardRevealed satisfies Card structurally
       setCards(c => [...c, card as unknown as Card]);
-      // Store revealed details (full PAN + CVV) for display in the row
       setRevealedDisposable(r => ({ ...r, [card.id]: card }));
+      // Start 5-minute countdown
+      setTimeLeft(5 * 60);
     } catch (e: any) { setError(e.message); }
     finally { setActionLoading(null); }
   }
@@ -125,6 +162,7 @@ export default function CardsPage() {
       await api.cards.cancelDisposable(card.id);
       setCards(c => c.map(x => x.id === card.id ? { ...x, status: "cancelled" as const } : x));
       setRevealedDisposable(r => { const copy = { ...r }; delete copy[card.id]; return copy; });
+      setTimeLeft(0);
     } catch (e: any) { setError(e.message); }
     finally { setActionLoading(null); }
   }
@@ -301,12 +339,21 @@ export default function CardsPage() {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Single-use cards</h2>
-          <button className={styles.outlineBtn} onClick={() => void issueDisposable()} disabled={actionLoading === "disposable"}>
-            <Zap size={14} /> {actionLoading === "disposable" ? "Generating…" : "Get disposable card"}
+          <button
+            className={`${styles.outlineBtn} ${timeLeft > 0 ? styles.outlineBtnActive : ""}`}
+            onClick={() => void issueDisposable()}
+            disabled={actionLoading === "disposable" || timeLeft > 0}
+          >
+            <Zap size={14} />
+            {actionLoading === "disposable"
+              ? "Generating…"
+              : timeLeft > 0
+              ? `Active · ${fmtTime(timeLeft)}`
+              : "Get disposable card"}
           </button>
         </div>
         <p className={styles.sectionDesc}>
-          A single-use card is automatically cancelled after its first transaction — ideal for one-off online purchases.
+          A single-use card is automatically cancelled after 5 minutes — ideal for one-off online purchases.
         </p>
         {disposableCards.length === 0 ? (
           <p className={styles.emptyHint}>No single-use cards yet. Generate one above to get a card number for a one-off purchase.</p>
@@ -315,35 +362,35 @@ export default function CardsPage() {
             {disposableCards.map(c => {
               const rev = revealedDisposable[c.id];
               const isInactive = c.status === "used" || c.status === "cancelled";
+              const isActiveDisposable = c.status === "active";
               return (
-                <div key={c.id} className={`${styles.disposableRow} ${isInactive ? styles.disposableUsed : ""}`}>
-                  <CreditCard size={15} className={styles.disposableIcon} />
-                  <div className={styles.disposableCardInfo}>
-                    <span className={styles.disposablePan}>
-                      {rev
-                        ? rev.cardNumber.replace(/(\d{4})/g, "$1 ").trim()
-                        : `•••• •••• •••• ${c.lastFour}`}
+                <div key={c.id} className={styles.disposableCardWrap}>
+                  <CardVisual card={c} revealed={rev ?? null} />
+                  <div className={`${styles.disposableRow} ${isInactive ? styles.disposableUsed : ""}`}>
+                    <div className={styles.disposableCardInfo}>
+                      {rev && (
+                        <span className={styles.disposableSecrets}>
+                          CVV {rev.cvv} · Exp {fmtExpiry(c.expiryMonth, c.expiryYear)}
+                        </span>
+                      )}
+                    </div>
+                    {isActiveDisposable && timeLeft > 0 && (
+                      <span className={styles.timerBadge}>⏱ {fmtTime(timeLeft)}</span>
+                    )}
+                    <span className={`${styles.statusPill} ${isActiveDisposable ? styles.pillActive : styles.pillUsed}`}>
+                      {c.status}
                     </span>
-                    {rev && (
-                      <span className={styles.disposableSecrets}>
-                        Exp {fmtExpiry(c.expiryMonth, c.expiryYear)} · CVV {rev.cvv}
-                      </span>
+                    {!isInactive && (
+                      <button
+                        className={styles.disposableCancelBtn}
+                        title="Cancel card"
+                        onClick={() => void cancelDisposable(c)}
+                        disabled={actionLoading === `cancel-${c.id}`}
+                      >
+                        <X size={13} />
+                      </button>
                     )}
                   </div>
-                  {!rev && <span className={styles.disposableExpiry}>{fmtExpiry(c.expiryMonth, c.expiryYear)}</span>}
-                  <span className={`${styles.statusPill} ${c.status === "active" ? styles.pillActive : styles.pillUsed}`}>
-                    {c.status}
-                  </span>
-                  {!isInactive && (
-                    <button
-                      className={styles.disposableCancelBtn}
-                      title="Cancel card"
-                      onClick={() => void cancelDisposable(c)}
-                      disabled={actionLoading === `cancel-${c.id}`}
-                    >
-                      <X size={13} />
-                    </button>
-                  )}
                 </div>
               );
             })}
