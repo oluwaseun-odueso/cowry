@@ -22,6 +22,7 @@ router.post('/cards/:cardId/unfreeze', AuthMiddleware.authenticate, AuthMiddlewa
 router.post('/cards/:cardId/block', AuthMiddleware.authenticate, AuthMiddleware.requireMfa, requireStepUp('unblock_card'), cardController.blockCard);
 router.post('/cards/:cardId/unblock', AuthMiddleware.authenticate, AuthMiddleware.requireMfa, requireStepUp('unblock_card'), cardController.unblockCard);
 router.post('/cards/:cardId/cancel', AuthMiddleware.authenticate, AuthMiddleware.requireMfa, requireStepUp('cancel_card'), cardController.cancelCard);
+router.post('/cards/:cardId/cancel-disposable', AuthMiddleware.authenticate, AuthMiddleware.requireMfa, cardController.cancelDisposableCard);
 
 // ─── Merchant block routes ────────────────────────────────────────────────────
 
