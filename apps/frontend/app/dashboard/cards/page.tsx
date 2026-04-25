@@ -111,11 +111,10 @@ export default function CardsPage() {
     try {
       const res = await api.cards.issueDisposable(accountId);
       const card = res.data.card;
-      // Store the revealed version (has cardNumber + cvv) keyed by id
+      // Add card to list immediately — CardRevealed satisfies Card structurally
+      setCards(c => [...c, card as unknown as Card]);
+      // Store revealed details (full PAN + CVV) for display in the row
       setRevealedDisposable(r => ({ ...r, [card.id]: card }));
-      // Refresh the full card list from the server so isDisposable/status are correct
-      const listRes = await api.cards.list(accountId);
-      setCards(listRes.data.cards);
     } catch (e: any) { setError(e.message); }
     finally { setActionLoading(null); }
   }
