@@ -110,9 +110,12 @@ export default function CardsPage() {
     setActionLoading("disposable");
     try {
       const res = await api.cards.issueDisposable(accountId);
-      const { cardNumber, cvv, ...cardBase } = res.data.card;
-      setCards((c) => [...c, cardBase as Card]);
-      setRevealedDisposable(r => ({ ...r, [res.data.card.id]: res.data.card }));
+      const card = res.data.card;
+      // Store the revealed version (has cardNumber + cvv) keyed by id
+      setRevealedDisposable(r => ({ ...r, [card.id]: card }));
+      // Refresh the full card list from the server so isDisposable/status are correct
+      const listRes = await api.cards.list(accountId);
+      setCards(listRes.data.cards);
     } catch (e: any) { setError(e.message); }
     finally { setActionLoading(null); }
   }
