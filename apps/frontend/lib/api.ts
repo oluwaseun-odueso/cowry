@@ -520,7 +520,10 @@ export const api = {
       request<{ status: string; data: { card: Card } }>(`/accounts/${accountId}/cards`, { method: "POST" }),
 
     issueDisposable: (accountId: string) =>
-      request<{ status: string; data: { card: Card } }>(`/accounts/${accountId}/cards/disposable`, { method: "POST" }),
+      request<{ status: string; data: { card: CardRevealed } }>(`/accounts/${accountId}/cards/disposable`, { method: "POST" }),
+
+    cancelDisposable: (cardId: string) =>
+      request<{ status: string; data: { card: Card } }>(`/cards/${cardId}/cancel-disposable`, { method: "POST" }),
 
     get: (cardId: string) =>
       request<{ status: string; data: { card: Card } }>(`/cards/${cardId}`),

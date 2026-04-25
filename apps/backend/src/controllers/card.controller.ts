@@ -96,6 +96,15 @@ export class CardController {
     }
   };
 
+  cancelDisposableCard = async (req: Request<{ cardId: string }>, res: Response): Promise<Response> => {
+    try {
+      const card = await this.cardService.cancelDisposableCard(req.user!.id, req.params.cardId);
+      return res.status(200).json({ status: 'success', data: { card } });
+    } catch (err: any) {
+      return res.status(400).json({ status: 'error', message: err.message });
+    }
+  };
+
   // ─── Merchant blocks ─────────────────────────────────────────────────────────
 
   listMerchantBlocks = async (req: Request, res: Response): Promise<Response> => {

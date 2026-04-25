@@ -64,6 +64,7 @@ export default function CardsPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [revealed, setRevealed] = useState<CardRevealed | null>(null);
   const [showingReveal, setShowingReveal] = useState(false);
+  const [revealedDisposable, setRevealedDisposable] = useState<Record<string, CardRevealed>>({});
   const [merchantBlocks, setMerchantBlocks] = useState<MerchantBlock[]>([]);
   const [newMerchant, setNewMerchant] = useState("");
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,19 @@ export default function CardsPage() {
     setActionLoading("disposable");
     try {
       const res = await api.cards.issueDisposable(accountId);
-      setCards((c) => [...c, res.data.card]);
+      const { cardNumber, cvv, ...cardBase } = res.data.card;
+      setCards((c) => [...c, cardBase as Card]);
+      setRevealedDisposable(r => ({ ...r, [res.data.card.id]: res.data.card }));
+    } catch (e: any) { setError(e.message); }
+    finally { setActionLoading(null); }
+  }
+
+  async function cancelDisposable(card: Card) {
+    setActionLoading(`cancel-${card.id}`);
+    try {
+      await api.cards.cancelDisposable(card.id);
+      setCards(c => c.map(x => x.id === card.id ? { ...x, status: "cancelled" as const } : x));
+      setRevealedDisposable(r => { const copy = { ...r }; delete copy[card.id]; return copy; });
     } catch (e: any) { setError(e.message); }
     finally { setActionLoading(null); }
   }
@@ -294,17 +307,44 @@ export default function CardsPage() {
           A single-use card is automatically cancelled after its first transaction — ideal for one-off online purchases.
         </p>
         {disposableCards.length === 0 ? (
-          <p className={styles.emptyHint}>No active single-use cards.</p>
+          <p className={styles.emptyHint}>No single-use cards yet. Generate one above to get a card number for a one-off purchase.</p>
         ) : (
           <div className={styles.disposableList}>
-            {disposableCards.map(c => (
-              <div key={c.id} className={`${styles.disposableRow} ${c.status === "used" ? styles.disposableUsed : ""}`}>
-                <CreditCard size={15} />
-                <span>•••• {c.lastFour}</span>
-                <span className={styles.disposableExpiry}>{fmtExpiry(c.expiryMonth, c.expiryYear)}</span>
-                <span className={`${styles.statusPill} ${c.status === "active" ? styles.pillActive : styles.pillUsed}`}>{c.status}</span>
-              </div>
-            ))}
+            {disposableCards.map(c => {
+              const rev = revealedDisposable[c.id];
+              const isInactive = c.status === "used" || c.status === "cancelled";
+              return (
+                <div key={c.id} className={`${styles.disposableRow} ${isInactive ? styles.disposableUsed : ""}`}>
+                  <CreditCard size={15} className={styles.disposableIcon} />
+                  <div className={styles.disposableCardInfo}>
+                    <span className={styles.disposablePan}>
+                      {rev
+                        ? rev.cardNumber.replace(/(\d{4})/g, "$1 ").trim()
+                        : `•••• •••• •••• ${c.lastFour}`}
+                    </span>
+                    {rev && (
+                      <span className={styles.disposableSecrets}>
+                        Exp {fmtExpiry(c.expiryMonth, c.expiryYear)} · CVV {rev.cvv}
+                      </span>
+                    )}
+                  </div>
+                  {!rev && <span className={styles.disposableExpiry}>{fmtExpiry(c.expiryMonth, c.expiryYear)}</span>}
+                  <span className={`${styles.statusPill} ${c.status === "active" ? styles.pillActive : styles.pillUsed}`}>
+                    {c.status}
+                  </span>
+                  {!isInactive && (
+                    <button
+                      className={styles.disposableCancelBtn}
+                      title="Cancel card"
+                      onClick={() => void cancelDisposable(c)}
+                      disabled={actionLoading === `cancel-${c.id}`}
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

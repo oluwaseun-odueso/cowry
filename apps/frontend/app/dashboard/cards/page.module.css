@@ -254,7 +254,20 @@
   color: #23164D;
 }
 .disposableUsed { opacity: 0.55; }
+.disposableIcon { flex-shrink: 0; color: #9CA3AF; }
+.disposableCardInfo { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+.disposablePan { font-size: 0.875rem; font-weight: 600; color: #23164D; font-family: monospace; letter-spacing: 0.05em; }
+.disposableSecrets { font-size: 0.75rem; color: #6B7280; font-weight: 500; }
 .disposableExpiry { font-size: 0.75rem; color: #9CA3AF; margin-left: auto; }
+.disposableCancelBtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.5rem; height: 1.5rem;
+  border: none; background: rgba(239,68,68,0.08); border-radius: 0.375rem;
+  color: #EF4444; cursor: pointer; flex-shrink: 0;
+  transition: background 0.15s;
+}
+.disposableCancelBtn:hover { background: rgba(239,68,68,0.16); }
+.disposableCancelBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 .statusPill {
   padding: 0.2rem 0.6rem;
   border-radius: 9999px;

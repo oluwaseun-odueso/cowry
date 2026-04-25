@@ -24,11 +24,22 @@ export class CardService {
     return CardRepository.create(accountId, 'debit');
   }
 
-  async issueDisposableCard(userId: string, accountId: string): Promise<Card> {
+  async issueDisposableCard(userId: string, accountId: string): Promise<CardWithPan> {
     const account = await AccountRepository.findById(accountId);
     if (!account) throw new Error('Account not found.');
     if (account.userId !== userId) throw new Error('Account not found.');
-    return CardRepository.create(accountId, 'disposable');
+    const card = await CardRepository.create(accountId, 'disposable');
+    const revealed = await CardRepository.reveal(card.id);
+    if (!revealed) throw new Error('Failed to reveal disposable card.');
+    return revealed;
+  }
+
+  async cancelDisposableCard(userId: string, cardId: string): Promise<Card> {
+    const card = await this.getCardForUser(userId, cardId);
+    if (!card.isDisposable) throw new Error('Not a disposable card.');
+    if (card.status === 'cancelled' || card.status === 'used') throw new Error('Card is already cancelled.');
+    await CardRepository.updateStatus(cardId, 'cancelled', false);
+    return (await CardRepository.findById(cardId))!;
   }
 
   async listCards(userId: string, accountId: string): Promise<Card[]> {
