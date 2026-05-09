@@ -15,13 +15,18 @@ import {
   FraudRiskLevel,
 } from '@cowry/types';
 
-const DAILY_WITHDRAWAL_LIMIT = 5_000;
+const DAILY_LIMIT: Record<AccountType, number> = {
+  [AccountType.SAVINGS]: 2_500,
+  [AccountType.CURRENT]: 5_000,
+};
 const LARGE_TRANSACTION_THRESHOLD = 10_000;
 const HIGH_DAILY_VOLUME_THRESHOLD = 15_000;
-const RAPID_TX_COUNT = 5;
-const RAPID_TX_WINDOW_MINUTES = 10;
-const RAPID_TRANSFER_COUNT = 3;
+const RAPID_TX_COUNT = 3;
+const RAPID_TX_WINDOW_MINUTES = 60;
+const RAPID_TRANSFER_COUNT = 2;
 const RAPID_TRANSFER_WINDOW_MINUTES = 10;
+const UNUSUAL_HOUR_START = 1;  // 01:00
+const UNUSUAL_HOUR_END   = 4;  // 04:00
 
 export class AccountService {
   // ─── Reference Generation ────────────────────────────────────────────────
@@ -93,7 +98,7 @@ export class AccountService {
     const tx = rows[0];
 
     // Non-blocking fraud check
-    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.CREDIT).catch(() => {});
+    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.CREDIT, account.accountType).catch(() => {});
 
     return {
       transaction: {
@@ -125,11 +130,12 @@ export class AccountService {
       throw new Error('Insufficient funds.');
     }
 
-    // Daily withdrawal limit check
+    // Daily withdrawal limit — per account type
+    const dailyLimit = DAILY_LIMIT[account.accountType] ?? DAILY_LIMIT.savings;
     const todayDebits = await TransactionRepository.sumDebitsForAccountToday(accountId);
-    if (todayDebits + amount > DAILY_WITHDRAWAL_LIMIT) {
+    if (todayDebits + amount > dailyLimit) {
       throw new Error(
-        `Withdrawal would exceed daily limit of £${DAILY_WITHDRAWAL_LIMIT.toLocaleString()}.`
+        `Withdrawal would exceed the daily limit of £${dailyLimit.toLocaleString()} for your ${account.accountType} account.`
       );
     }
 
@@ -162,7 +168,7 @@ export class AccountService {
     );
     const tx = rows[0];
 
-    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.DEBIT).catch(() => {});
+    this.runTransactionFraudChecks(userId, accountId, amount, TransactionType.DEBIT, account.accountType).catch(() => {});
 
     return {
       transaction: {
@@ -193,6 +199,15 @@ export class AccountService {
     }
     if (fromAccount.balance < amount) {
       throw new Error('Insufficient funds.');
+    }
+
+    // Daily transfer limit — per account type
+    const dailyLimit = DAILY_LIMIT[fromAccount.accountType];
+    const todayDebits = await TransactionRepository.sumDebitsForAccountToday(fromAccountId);
+    if (todayDebits + amount > dailyLimit) {
+      throw new Error(
+        `Transfer would exceed the daily limit of £${dailyLimit.toLocaleString()} for your ${fromAccount.accountType} account.`
+      );
     }
 
     const toAccount = await AccountRepository.findByAccountNumber(toAccountNumber);
@@ -346,24 +361,41 @@ export class AccountService {
     userId: string,
     accountId: string,
     amount: number,
-    type: TransactionType
+    type: TransactionType,
+    accountType?: AccountType
   ): Promise<void> {
     const dummyIp = '0.0.0.0';
 
-    // Rule 1: Large transaction
+    // Rule 1: Large transaction (absolute threshold)
     if (amount > LARGE_TRANSACTION_THRESHOLD) {
       await FraudAlertRepository.create({
         userId,
         ruleName: 'large_transaction',
         riskLevel: FraudRiskLevel.HIGH,
-        description: `${type === TransactionType.CREDIT ? 'Deposit' : 'Withdrawal'} of £${amount.toFixed(2)} exceeds large transaction threshold.`,
+        description: `${type === TransactionType.CREDIT ? 'Deposit' : 'Withdrawal'} of £${amount.toFixed(2)} exceeds large transaction threshold of £${LARGE_TRANSACTION_THRESHOLD.toLocaleString()}.`,
         ipAddress: dummyIp,
         metadata: { accountId, amount, type },
         action: 'alert',
       });
     }
 
-    // Rule 2: Rapid transactions
+    // Rule 2: Single transaction exceeds 80% of daily limit
+    if (type === TransactionType.DEBIT && accountType) {
+      const dailyLimit = DAILY_LIMIT[accountType];
+      if (amount > dailyLimit * 0.8) {
+        await FraudAlertRepository.create({
+          userId,
+          ruleName: 'large_single_debit',
+          riskLevel: FraudRiskLevel.MEDIUM,
+          description: `Single debit of £${amount.toFixed(2)} exceeds 80% of the £${dailyLimit.toLocaleString()} daily limit for a ${accountType} account.`,
+          ipAddress: dummyIp,
+          metadata: { accountId, amount, dailyLimit },
+          action: 'alert',
+        });
+      }
+    }
+
+    // Rule 3: Rapid transactions (>3 within 60 minutes)
     const recentTx = await TransactionRepository.findRecentByAccountId(
       accountId,
       RAPID_TX_WINDOW_MINUTES,
@@ -374,14 +406,14 @@ export class AccountService {
         userId,
         ruleName: 'rapid_transactions',
         riskLevel: FraudRiskLevel.MEDIUM,
-        description: `More than ${RAPID_TX_COUNT} transactions on account ${accountId} within ${RAPID_TX_WINDOW_MINUTES} minutes.`,
+        description: `More than ${RAPID_TX_COUNT} transactions on account within ${RAPID_TX_WINDOW_MINUTES} minutes.`,
         ipAddress: dummyIp,
         metadata: { accountId, count: recentTx.length },
         action: 'alert',
       });
     }
 
-    // Rule 3: High daily debit volume
+    // Rule 4: High daily debit volume
     if (type === TransactionType.DEBIT) {
       const dailyDebits = await TransactionRepository.sumDebitsForAccountToday(accountId);
       if (dailyDebits > HIGH_DAILY_VOLUME_THRESHOLD) {
@@ -389,12 +421,26 @@ export class AccountService {
           userId,
           ruleName: 'high_daily_debit_volume',
           riskLevel: FraudRiskLevel.MEDIUM,
-          description: `Total daily debits of £${dailyDebits.toFixed(2)} exceed threshold of £${HIGH_DAILY_VOLUME_THRESHOLD}.`,
+          description: `Total daily debits of £${dailyDebits.toFixed(2)} exceed threshold of £${HIGH_DAILY_VOLUME_THRESHOLD.toLocaleString()}.`,
           ipAddress: dummyIp,
           metadata: { accountId, dailyDebits },
           action: 'alert',
         });
       }
+    }
+
+    // Rule 5: Unusual hour (01:00–04:00)
+    const hour = new Date().getUTCHours();
+    if (hour >= UNUSUAL_HOUR_START && hour < UNUSUAL_HOUR_END) {
+      await FraudAlertRepository.create({
+        userId,
+        ruleName: 'unusual_hour_transaction',
+        riskLevel: FraudRiskLevel.LOW,
+        description: `Transaction of £${amount.toFixed(2)} made at an unusual hour (${hour.toString().padStart(2, '0')}:00 UTC).`,
+        ipAddress: dummyIp,
+        metadata: { accountId, amount, hour },
+        action: 'log',
+      });
     }
   }
 
