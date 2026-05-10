@@ -247,24 +247,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className={styles.nav}>
-          {NAV.map(({ label, href, icon: Icon }) => {
-            const active =
-              href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-
-          {isAdmin && (
+          {isAdmin ? (
             <Link
               href="/dashboard/admin"
               className={`${styles.navLink} ${pathname.startsWith("/dashboard/admin") ? styles.navLinkActive : ""}`}
@@ -272,6 +255,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <ShieldAlert size={18} />
               <span>Admin</span>
             </Link>
+          ) : (
+            NAV.map(({ label, href, icon: Icon }) => {
+              const active =
+                href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
+                >
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })
           )}
         </nav>
 

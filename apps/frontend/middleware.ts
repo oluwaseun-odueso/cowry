@@ -34,6 +34,16 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Admin users hitting non-admin dashboard routes → redirect to admin panel
+  if (
+    token &&
+    userRole === "admin" &&
+    pathname.startsWith("/dashboard") &&
+    !isAdminRoute
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/admin", request.url));
+  }
+
   // No token on a protected route → redirect to login
   if (!isPublic && !isSetup && !token) {
     const loginUrl = new URL("/login", request.url);
