@@ -195,6 +195,47 @@
 .submitBtn:active { transform: scale(0.98); }
 .submitBtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
+/* ── Divider ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.dividerText {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
+}
+
+/* ── Google button ── */
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  height: 3.25rem;
+  width: 100%;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.googleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
 .footer {
   text-align: center;
   font-size: 0.875rem;
@@ -245,6 +286,16 @@
   .strengthBar { background: #F3F3F3; }
 
   .error { background: rgba(239, 68, 68, 0.08); color: #dc2626; }
+
+  .dividerLine { background: #E5E7EB; }
+  .dividerText { color: #9CA3AF; }
+
+  .googleBtn {
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    color: #23164D;
+  }
+  .googleBtn:hover { background: #F9FAFB; border-color: #D1D5DB; }
 
   .footer { color: #6B7280; }
   .footerLink { color: #252B65; }
