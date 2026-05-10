@@ -90,6 +90,30 @@ function UsersTab() {
 ───────────────────────────────────────────── */
 const RISK_LABELS: Record<string, string> = { low: "LOW", medium: "MED", high: "HIGH" };
 
+const RULE_LABELS: Record<string, string> = {
+  USER_REGISTRATION:            "User registration",
+  FAILED_LOGIN_ATTEMPT:         "Failed login",
+  ACCOUNT_LOCKED:               "Account locked",
+  LOCKED_ACCOUNT_ATTEMPT:       "Locked account login attempt",
+  SUCCESSFUL_LOGIN:             "Successful login",
+  UNUSUAL_LOCATION:             "Unusual location",
+  NEW_DEVICE:                   "New device",
+  IP_VELOCITY:                  "IP velocity",
+  CONCURRENT_SESSIONS_EXCEEDED: "Concurrent sessions exceeded",
+  REFRESH_TOKEN_REUSE:          "Token reuse detected",
+  MFA_ENABLED:                  "MFA enabled",
+  MFA_DISABLED:                 "MFA disabled",
+  PASSWORD_RESET:               "Password reset",
+  GOOGLE_ACCOUNT_LINKED:        "Google account linked",
+  large_transaction:            "Large transaction",
+  large_single_debit:           "Large single debit",
+  rapid_transactions:           "Rapid transactions",
+  high_daily_debit_volume:      "High daily debit volume",
+  unusual_hour_transaction:     "Unusual hour transaction",
+  new_payee_transfer:           "New payee transfer",
+  rapid_transfers:              "Rapid transfers",
+};
+
 function AuditTab() {
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -158,6 +182,7 @@ function AuditTab() {
                 <th>Risk</th>
                 <th>Description</th>
                 <th>IP</th>
+                <th>Location</th>
                 <th>Date</th>
                 <th>Status</th>
                 <th></th>
@@ -166,7 +191,7 @@ function AuditTab() {
             <tbody>
               {alerts.map((alert) => (
                 <tr key={alert.id}>
-                  <td className={styles.tdRule}>{alert.ruleName}</td>
+                  <td className={styles.tdRule}>{RULE_LABELS[alert.ruleName] ?? alert.ruleName}</td>
                   <td>
                     <span className={`${styles.badge} ${
                       alert.riskLevel === "high"   ? styles.badgeHigh :
@@ -177,8 +202,16 @@ function AuditTab() {
                   </td>
                   <td className={styles.tdDesc}>{alert.description}</td>
                   <td className={styles.tdIp}>{alert.ipAddress}</td>
+                  <td className={styles.tdLocation}>
+                    {(() => {
+                      const loc = alert.location as { city?: string; country?: string } | null;
+                      if (loc?.city && loc?.country) return `${loc.city}, ${loc.country}`;
+                      if (loc?.country) return loc.country;
+                      return "—";
+                    })()}
+                  </td>
                   <td className={styles.tdDate}>
-                    {new Date(alert.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(alert.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </td>
                   <td>
                     <span className={`${styles.badge} ${alert.isResolved ? styles.badgeActive : styles.badgeSuspended}`}>

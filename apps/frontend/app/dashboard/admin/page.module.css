@@ -199,7 +199,8 @@
 .tdCenter{ text-align: center; }
 .tdRule  { font-weight: 600; white-space: nowrap; }
 .tdDesc  { max-width: 18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tdIp    { font-family: ui-monospace, monospace; font-size: 0.75rem; white-space: nowrap; color: #6B7280; }
+.tdIp       { font-family: ui-monospace, monospace; font-size: 0.75rem; white-space: nowrap; color: #6B7280; }
+.tdLocation { font-size: 0.75rem; color: #6B7280; white-space: nowrap; }
 
 /* ── Badges ── */
 .badge {
