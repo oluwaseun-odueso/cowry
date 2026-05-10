@@ -193,7 +193,7 @@
 .table tbody tr:hover td { background: #F3F3F3; }
 
 /* ── Cell helpers ── */
-.tdName  { font-weight: 700; white-space: nowrap; }
+.tdName  { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; color: #23164D; }
 .tdEmail { color: #6B7280; white-space: nowrap; }
 .tdDate  { white-space: nowrap; color: #9CA3AF; font-size: 0.75rem; }
 .tdCenter{ text-align: center; }
