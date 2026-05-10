@@ -16,9 +16,23 @@ const SETUP_PATHS = ["/setup-mfa", "/setup-avatar", "/setup-passcode"];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("accessToken")?.value;
+  const userRole = request.cookies.get("userRole")?.value;
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
   const isSetup = SETUP_PATHS.some((p) => pathname.startsWith(p));
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+
+  // Admin routes: must be authenticated AND have admin role
+  if (isAdminRoute) {
+    if (!token) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (userRole !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
 
   // No token on a protected route → redirect to login
   if (!isPublic && !isSetup && !token) {

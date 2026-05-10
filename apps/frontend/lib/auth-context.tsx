@@ -55,12 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .getProfile()
       .then(({ data }) => {
         document.cookie = `accessToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        document.cookie = `userRole=${data.user.role}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         setState({ user: data.user, isLoading: false, isAuthenticated: true, isLocked: false });
       })
       .catch(() => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
+        document.cookie = "userRole=; path=/; max-age=0; SameSite=Lax";
         setState({ user: null, isLoading: false, isAuthenticated: false, isLocked: false });
       });
   }, []);
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("accessToken", tokens.accessToken);
       localStorage.setItem("refreshToken", tokens.refreshToken);
       document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = `userRole=${user.role}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       // Seed the self-rescheduling refresh chain — api.ts takes it from here
       scheduleProactiveRefresh(tokens.expiresIn ?? 900);
       setState({ user, isLoading: false, isAuthenticated: true, isLocked: false });
@@ -86,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "userRole=; path=/; max-age=0; SameSite=Lax";
       setState({ user: null, isLoading: false, isAuthenticated: false, isLocked: false });
     }
   }, []);
