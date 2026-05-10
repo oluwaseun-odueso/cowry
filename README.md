@@ -570,12 +570,12 @@ All endpoints are prefixed with `/api/v1`. A Postman collection (`Cowry.postman_
 
 ## Authentication Flow
 
-1. **Register** — user submits email + password → receives a verification email
-2. **Verify email** — click link → account activated
-3. **Login** — `POST /auth/login` returns `accessToken` in the JSON body; `refreshToken` is set as an httpOnly cookie and is never exposed to JavaScript
+1. **Register:** user submits email + password → receives a verification email
+2. **Verify email:** click link → account activated
+3. **Login:** `POST /auth/login` returns `accessToken` in the JSON body; `refreshToken` is set as an httpOnly cookie and is never exposed to JavaScript
 4. **MFA setup** (required before accessing accounts/cards) — scan QR code in an authenticator app → confirm TOTP → MFA enabled
-5. **Token refresh** — the frontend proactively refreshes 2 minutes before expiry and retries automatically on any 401 response
-6. **Step-up verification** — sensitive actions (large transfers, card reveals, unfreeze/unblock) require a short-lived OTP before the operation proceeds
+5. **Token refresh:** the frontend proactively refreshes 2 minutes before expiry and retries automatically on any 401 response
+6. **Step-up verification:** sensitive actions (large transfers, card reveals, unfreeze/unblock) require a short-lived OTP before the operation proceeds
 
 ---
 
@@ -638,15 +638,15 @@ Route protection is handled by Next.js middleware (`middleware.ts`) which reads 
 
 ## Security
 
-- **Helmet** — sets secure HTTP headers (HSTS + CSP enforced in production)
-- **CORS** — restricted to `CLIENT_URL` with credentials
-- **Rate limiting** — 100 requests per 15-minute window per IP on `/api`
-- **bcrypt** — password hashing
-- **httpOnly cookie** — refresh token is never accessible to JavaScript
-- **Step-up OTP** — time-limited OTP required before sensitive operations
-- **Geolocation monitoring** — login locations tracked via `geoip-lite`; anomalies raise fraud alerts
-- **Session tracking** — all active sessions visible to the user; any session can be revoked individually
-- **Inactivity lock** — frontend auto-locks after a period of inactivity
+- **Helmet:** sets secure HTTP headers (HSTS + CSP enforced in production)
+- **CORS:** restricted to `CLIENT_URL` with credentials
+- **Rate limiting:** 100 requests per 15-minute window per IP on `/api`
+- **bcrypt:** password hashing
+- **httpOnly cookie:** refresh token is never accessible to JavaScript
+- **Step-up OTP:** time-limited OTP required before sensitive operations
+- **Geolocation monitoring:** login locations tracked via `geoip-lite`; anomalies raise fraud alerts
+- **Session tracking:** all active sessions visible to the user; any session can be revoked individually
+- **Inactivity lock:** frontend auto-locks after a period of inactivity
 
 ---
 
@@ -654,9 +654,9 @@ Route protection is handled by Next.js middleware (`middleware.ts`) which reads 
 
 Admin users (`role: ADMIN`) have access to:
 
-- **User list** — view all registered accounts
-- **Fraud audit log** — paginated list of flagged events with risk level (LOW / MEDIUM / HIGH), location, timestamps, and human-readable rule descriptions
-- **Resolve alerts** — mark fraud alerts as investigated and resolved
+- **User list**: view all registered accounts
+- **Fraud audit log**: paginated list of flagged events with risk level (LOW / MEDIUM / HIGH), location, timestamps, and human-readable rule descriptions
+- **Resolve alerts**: mark fraud alerts as investigated and resolved
 
 Admin users are routed exclusively to `/dashboard/admin` and cannot access the standard user dashboard. To promote a user to admin, update their `role` column directly in the database:
 
