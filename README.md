@@ -175,7 +175,7 @@ npx playwright install chromium
 - TOTP-based multi-factor authentication (authenticator app + QR code)
 - MFA backup codes for account recovery
 - 6-digit passcode for quick unlock
-- Step-up OTP verification for sensitive operations (large transfers, card reveals, etc.)
+- Step-up OTP verification for sensitive operations (large transfers, card reveals, etc.) — codes delivered via email
 - JWT access + refresh token pair (httpOnly cookie for refresh)
 - Proactive token refresh (2 minutes before expiry)
 - Session management with device and location tracking
@@ -201,8 +201,7 @@ npx playwright install chromium
 | Backend | Express 5, Node.js, TypeScript, Passport.js |
 | Database | MySQL (raw queries via mysql2/promise connection pool) |
 | Auth | JWT, Google OAuth 2.0, TOTP (speakeasy), bcrypt |
-| Email | Mailjet |
-| SMS / OTP | Twilio |
+| Email / OTP | Mailjet |
 | Package Manager | pnpm (workspaces) |
 | Shared Types | `@cowry/types` (workspace package) |
 
@@ -366,15 +365,6 @@ Cowry uses Mailjet to send verification emails and password reset links.
 3. Copy your **API Key** and **Secret Key**
 4. Verify a sender email address under **Senders & Domains**
 
-#### Twilio (SMS / OTP)
-
-Cowry uses Twilio to send OTP codes via SMS.
-
-1. Create a free account at https://www.twilio.com
-2. From the Twilio console, copy your **Account SID** and **Auth Token**
-3. Get a Twilio phone number (the free trial includes one)
-4. Note the phone number in E.164 format, e.g. `+14155552671`
-
 #### Google OAuth (optional — for "Sign in with Google")
 
 If you want Google login to work:
@@ -434,14 +424,9 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_CALLBACK_URL=http://localhost:3000/api/v1/auth/google/callback
 
-# Mailjet
+# Mailjet (email delivery — verification, password reset, OTP codes)
 MAILJET_API_KEY=<from mailjet dashboard>
 MAILJET_SECRET_KEY=<from mailjet dashboard>
-
-# Twilio
-TWILIO_ACCOUNT_SID=<from twilio console>
-TWILIO_AUTH_TOKEN=<from twilio console>
-TWILIO_PHONE_NUMBER=+1...
 ```
 
 To generate a secure random secret:
@@ -572,9 +557,6 @@ Set `NODE_ENV=production` in the backend `.env` for production — this enables 
 | `GOOGLE_CALLBACK_URL` | No | Google OAuth redirect URI |
 | `MAILJET_API_KEY` | Yes | Mailjet public API key |
 | `MAILJET_SECRET_KEY` | Yes | Mailjet secret key |
-| `TWILIO_ACCOUNT_SID` | Yes | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | Yes | Twilio auth token |
-| `TWILIO_PHONE_NUMBER` | Yes | Verified Twilio sender number |
 
 ### Frontend — `apps/frontend/.env.local`
 
