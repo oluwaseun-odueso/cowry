@@ -9,6 +9,12 @@ Cowry is a full-stack digital banking application built as a monorepo. It provid
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
+- [Testing](#testing)
+  - [Test Stack](#test-stack)
+  - [Running the Tests](#running-the-tests)
+  - [Test Results](#test-results)
+  - [Test Coverage](#test-coverage)
+  - [E2E Tests](#e2e-tests)
 - [Running the Application on a New Device](#running-the-application-on-a-new-device)
   - [System Requirements](#system-requirements)
   - [1. Install Node.js](#1-install-nodejs)
@@ -29,6 +35,115 @@ Cowry is a full-stack digital banking application built as a monorepo. It provid
 - [Frontend Pages](#frontend-pages)
 - [Security](#security)
 - [Admin Panel](#admin-panel)
+
+---
+
+## Testing
+
+The project has a three-layer test suite: backend unit and integration tests (Vitest + supertest), frontend component and hook tests (Vitest + React Testing Library), and end-to-end browser tests (Playwright).
+
+### Test Stack
+
+| Layer | Tool | Scope |
+|---|---|---|
+| Backend unit & integration | Vitest, supertest | Services, middleware, route contracts |
+| Frontend unit | Vitest, React Testing Library, jsdom | Components, hooks, utilities |
+| End-to-end | Playwright (Chromium, Firefox, Mobile Chrome) | Full user flows against live servers |
+
+### Running the Tests
+
+```bash
+# Run all backend + frontend unit and integration tests
+pnpm test
+
+# Backend only (watch mode)
+pnpm test:backend
+
+# Frontend only (watch mode)
+pnpm test:frontend
+
+# Generate coverage reports
+pnpm --filter @cowry/backend test:coverage
+pnpm --filter @cowry/frontend test:coverage
+
+# End-to-end (requires both servers running or will start them automatically)
+pnpm test:e2e
+```
+
+### Test Results
+
+All 192 unit and integration tests pass.
+
+#### Backend — 145 tests across 9 files
+
+| Suite | File | Tests |
+|---|---|---|
+| Auth middleware | `unit/middleware/auth.middleware.test.ts` | 13 |
+| Step-up middleware | `unit/middleware/stepup.middleware.test.ts` | 7 |
+| Validation middleware | `unit/middleware/validation.middleware.test.ts` | 25 |
+| Auth service | `unit/services/auth.service.test.ts` | 33 |
+| Account service | `unit/services/account.service.test.ts` | 17 |
+| Card model utils | `unit/models/card.utils.test.ts` | 8 |
+| Auth routes (integration) | `integration/auth.routes.test.ts` | 18 |
+| Account routes (integration) | `integration/account.routes.test.ts` | 15 |
+| Admin routes (integration) | `integration/admin.routes.test.ts` | 9 |
+
+```
+Test Files  9 passed (9)
+     Tests  145 passed (145)
+  Duration  ~1.2s
+```
+
+#### Frontend — 47 tests across 5 files
+
+| Suite | File | Tests |
+|---|---|---|
+| Button component | `unit/components/button.test.tsx` | 11 |
+| StepUpModal component | `unit/components/step-up-modal.test.tsx` | 14 |
+| useStepUp hook | `unit/hooks/use-step-up.test.ts` | 8 |
+| cn() utility | `unit/lib/utils.test.ts` | 7 |
+| Login page | `pages/login.test.tsx` | 7 |
+
+```
+Test Files  5 passed (5)
+     Tests  47 passed (47)
+  Duration  ~1.2s
+```
+
+### Test Coverage
+
+Key areas covered by the unit and integration test suites:
+
+**Auth service** — user registration (duplicate email/phone), login (MFA challenge, account lockout after 5 attempts, locked account, unverified email), email verification, password reset (anti-enumeration), change password, TOTP setup/enable/disable, backup codes, refresh token rotation and reuse detection.
+
+**Account service** — account creation (duplicate type guard), ownership checks, deposit (suspended account), withdrawal (insufficient funds, daily limit enforcement: £2,500 savings / £5,000 current), transfers (same account, currency mismatch, destination not found, insufficient funds).
+
+**Middleware** — JWT extraction and validation, MFA requirement gate, admin role enforcement, step-up token verification (missing header, wrong action, wrong type, user mismatch, expired, malformed), request body validation rules.
+
+**Integration routes** — full HTTP contract tests for every route group: correct status codes (401 unauthenticated, 403 insufficient role, 400 validation, 409 conflict, 200/201 success), MFA-setup-required enforcement, step-up enforcement on `PUT /auth/change-password`.
+
+**Frontend** — Button variants and interaction, StepUpModal visibility/input/submit/dismiss behaviour, `useStepUp` state machine (open, submit, dismiss, cancel, error states), `cn()` Tailwind merge utility, LoginPage (standard login, MFA redirect, setup-MFA redirect, error messages).
+
+### E2E Tests
+
+Playwright tests cover four flows. They run against live backend (:3000) and frontend (:3001) servers, which Playwright starts automatically.
+
+| Spec | Scenarios |
+|---|---|
+| `auth.spec.ts` | Registration, email verification, login, wrong-password lockout (5 attempts), forgot-password reset, MFA setup and MFA login |
+| `accounts.spec.ts` | Account creation, deposit, withdrawal, transfer, transaction history |
+| `cards.spec.ts` | Issue virtual card, freeze, unfreeze (step-up modal check), reveal card details (step-up modal check) |
+| `admin.spec.ts` | Audit log RBAC (403 for regular users), risk-level filtering, resolve alert, users table |
+
+To run E2E tests with a visible browser:
+```bash
+pnpm test:e2e --headed
+```
+
+To install Playwright browsers (first time only):
+```bash
+npx playwright install chromium
+```
 
 ---
 
