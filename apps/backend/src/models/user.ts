@@ -2,7 +2,8 @@ import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import pool from "../config/database";
-import { UserRole, AccountStatus } from '@cowry/types';
+import { UserRole, AccountStatus } from '../types';
+
 
 export interface User {
   id: string;

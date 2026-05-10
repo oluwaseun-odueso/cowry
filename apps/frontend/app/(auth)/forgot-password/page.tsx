@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
           <p className={styles.successText}>
             We sent a reset link to{" "}
             <span className={styles.successEmail}>{email}</span>.
-            Check your inbox — it expires in 15 minutes.
+            Check your inbox, it expires in 15 minutes.
           </p>
           <Link href="/login" className={styles.backLink}>
             <ArrowLeft size={14} />
