@@ -18,6 +18,7 @@ export default defineConfig({
     globals: true,
     testTimeout: 10_000,
     setupFiles: ['./src/__tests__/setup.ts'],
+    exclude: ['node_modules', '.next', 'dist'],
     include: ['**/__tests__/**/*.test.{ts,tsx}'],
     css: true,
     coverage: {
