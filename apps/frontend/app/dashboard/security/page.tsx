@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, Copy, Check, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Copy, Check, Shield, Smartphone, Laptop, MapPin, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
+import { api, Session } from "@/lib/api";
 import styles from "./page.module.css";
 
 /* ─────────────────────────────────────────────
@@ -300,6 +300,105 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
 }
 
 /* ─────────────────────────────────────────────
+   Active Sessions section
+───────────────────────────────────────────── */
+function SessionsSection() {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.auth.sessions()
+      .then(({ data }) => setSessions(data.sessions))
+      .catch(() => setError("Failed to load sessions."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleRevoke(sessionId: string) {
+    setRevoking(sessionId);
+    try {
+      await api.auth.revokeSession(sessionId);
+      setSessions((s) => s.filter((x) => x.id !== sessionId));
+    } catch {
+      setError("Failed to revoke session.");
+    } finally {
+      setRevoking(null);
+    }
+  }
+
+  function deviceLabel(s: Session) {
+    const b = s.deviceInfo?.browser;
+    const o = s.deviceInfo?.os;
+    if (b && o) return `${b} on ${o}`;
+    if (b) return b;
+    if (o) return o;
+    return "Unknown device";
+  }
+
+  function locationLabel(s: Session) {
+    const city = s.location?.city;
+    const country = s.location?.country;
+    if (city && country) return `${city}, ${country}`;
+    if (country) return country;
+    return "Unknown location";
+  }
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Active sessions</h2>
+        <p className={styles.sectionSub}>Devices currently logged in to your account. Revoke any session you don&apos;t recognise.</p>
+      </div>
+
+      {error && <p className={styles.errorMsg}>{error}</p>}
+
+      {loading ? (
+        <div className={styles.sessionList}>
+          {[1, 2].map((i) => <div key={i} className={styles.sessionSkeleton} />)}
+        </div>
+      ) : sessions.length === 0 ? (
+        <p className={styles.emptyMsg}>No active sessions found.</p>
+      ) : (
+        <div className={styles.sessionList}>
+          {sessions.map((s, i) => (
+            <div key={s.id} className={styles.sessionRow}>
+              <div className={styles.sessionIcon}>
+                {s.deviceInfo?.isMobile ? <Smartphone size={18} /> : <Laptop size={18} />}
+              </div>
+              <div className={styles.sessionInfo}>
+                <div className={styles.sessionDevice}>
+                  {deviceLabel(s)}
+                  {i === 0 && <span className={styles.thisDeviceBadge} style={{ marginLeft: "0.5rem" }}>This device</span>}
+                </div>
+                <div className={styles.sessionMeta}>
+                  <MapPin size={11} />
+                  {locationLabel(s)}
+                  &nbsp;·&nbsp;
+                  <span className={styles.sessionIp}>{s.ipAddress}</span>
+                  &nbsp;·&nbsp;
+                  {new Date(s.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </div>
+              </div>
+              {i !== 0 && (
+                <button
+                  className={styles.revokeBtn}
+                  onClick={() => handleRevoke(s.id)}
+                  disabled={revoking === s.id}
+                  title="Revoke session"
+                >
+                  <LogOut size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Page root
 ───────────────────────────────────────────── */
 export default function SecurityPage() {
@@ -309,11 +408,12 @@ export default function SecurityPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Security</h1>
-        <p className={styles.pageSub}>Manage your password and two-factor authentication.</p>
+        <p className={styles.pageSub}>Manage your password, two-factor authentication, and active sessions.</p>
       </div>
 
       <ChangePasswordSection />
       <MfaSection isMfaEnabled={user?.isMfaEnabled ?? false} />
+      <SessionsSection />
     </div>
   );
 }

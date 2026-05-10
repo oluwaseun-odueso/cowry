@@ -409,6 +409,26 @@
 .revokeBtn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); }
 .revokeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.sessionIcon { color: #9CA3AF; flex-shrink: 0; }
+
+.sessionIp {
+  font-size: 0.6875rem;
+  color: #9CA3AF;
+  font-family: monospace;
+}
+
+.thisDeviceBadge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  flex-shrink: 0;
+}
+
 .emptyMsg {
   font-size: 0.875rem;
   color: #6B7280;
