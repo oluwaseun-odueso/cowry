@@ -39,7 +39,7 @@ function UsersTab() {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Name</th>
+            <th>ID</th>
             <th>Email</th>
             <th>Role</th>
             <th>Status</th>
@@ -51,7 +51,7 @@ function UsersTab() {
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
-              <td className={styles.tdName}>{u.firstName} {u.lastName}</td>
+              <td className={styles.tdName}>{u.id}</td>
               <td className={styles.tdEmail}>{u.email}</td>
               <td>
                 <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : styles.badgeUser}`}>
