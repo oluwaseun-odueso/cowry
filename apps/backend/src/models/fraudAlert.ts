@@ -138,8 +138,8 @@ export class FraudAlertRepository {
     const total = (countRows[0] as RowDataPacket).total as number;
 
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT * FROM fraud_alerts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset],
+      `SELECT * FROM fraud_alerts ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+      params,
     );
 
     return { alerts: rows.map(r => mapRow(r as RowDataPacket)), total };
