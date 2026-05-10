@@ -1,8 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AccountType, BankAccountStatus, TransactionType } from '@cowry/types';
+import { AccountType, BankAccountStatus } from '@cowry/types';
 import { makeMockAccount } from '../../helpers/auth-helpers';
 
-// ── Mocks ─────────────────────────────────────────────────────────────────────
+// ── vi.hoisted() runs before any vi.mock() factory ────────────────────────────
+
+const mockConn = vi.hoisted(() => ({
+  beginTransaction: vi.fn(),
+  execute: vi.fn(),
+  commit: vi.fn(),
+  rollback: vi.fn(),
+  release: vi.fn(),
+}));
+
+// Vitest hoists vi.mock() calls before imports at runtime, so these mocks
+// are in effect when the service module is first loaded.
 
 vi.mock('../../../models/account', () => ({
   AccountRepository: {
@@ -34,45 +45,35 @@ vi.mock('../../../models/fraudAlert', () => ({
   FraudAlertRepository: { create: vi.fn() },
 }));
 
-// Mock the database pool (used directly in deposit/withdraw/transfer)
-vi.mock('../../../config/database', () => {
-  const conn = {
-    beginTransaction: vi.fn(),
-    execute: vi.fn().mockResolvedValue([[], []]),
-    commit: vi.fn(),
-    rollback: vi.fn(),
-    release: vi.fn(),
-  };
-  return {
-    default: {
-      getConnection: vi.fn().mockResolvedValue(conn),
-      execute: vi.fn().mockResolvedValue([[{
-        id: 'tx-001',
-        account_id: 'acc-001',
-        type: 'credit',
-        amount: '100.00',
-        currency: 'GBP',
-        reference: 'TXN-20250101-ABCD1234',
-        description: null,
-        status: 'completed',
-        created_at: new Date(),
-      }], []]),
-    },
-  };
-}),
+// Mock the database pool (used directly in deposit/withdraw/transfer for transactions)
+vi.mock('../../../config/database', () => ({
+  default: {
+    getConnection: vi.fn(),
+    execute: vi.fn(),
+  },
+}));
 
-// ── Imports ───────────────────────────────────────────────────────────────────
+// ── These imports resolve to the mocked versions ──────────────────────────────
 
 import { AccountService } from '../../../services/account.service';
 import { AccountRepository } from '../../../models/account';
 import { TransactionRepository } from '../../../models/transaction';
 import { TransferRepository } from '../../../models/transfer';
 import { FraudAlertRepository } from '../../../models/fraudAlert';
+import db from '../../../config/database';
 
 const mAccountRepo = vi.mocked(AccountRepository);
 const mTxRepo = vi.mocked(TransactionRepository);
 const mTransferRepo = vi.mocked(TransferRepository);
 const mFraud = vi.mocked(FraudAlertRepository);
+const mDb = vi.mocked(db);
+
+const mockTxRow = {
+  id: 'tx-001', account_id: 'acc-001', type: 'credit',
+  amount: '100.00', currency: 'GBP',
+  reference: 'TXN-20250101-ABCD1234', description: null,
+  status: 'completed', created_at: new Date(),
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,15 @@ describe('AccountService', () => {
     mTxRepo.findRecentByAccountId.mockResolvedValue([]);
     mTransferRepo.hasTransferredToAccount.mockResolvedValue(true);
     mTransferRepo.countRecentFromAccount.mockResolvedValue(0);
+
+    // Reset connection mock before each test (clearMocks/restoreMocks can wipe these)
+    mockConn.beginTransaction.mockResolvedValue(undefined);
+    mockConn.execute.mockResolvedValue([[], []]);
+    mockConn.commit.mockResolvedValue(undefined);
+    mockConn.rollback.mockResolvedValue(undefined);
+    mockConn.release.mockReturnValue(undefined);
+    mDb.getConnection.mockResolvedValue(mockConn as any);
+    mDb.execute.mockResolvedValue([[mockTxRow], []] as any);
   });
 
   // ── createAccount() ──────────────────────────────────────────────────────────
@@ -165,7 +175,9 @@ describe('AccountService', () => {
 
   describe('withdraw()', () => {
     it('commits a debit transaction and returns the new balance', async () => {
-      const account = makeMockAccount({ balance: 1000, status: BankAccountStatus.ACTIVE, accountType: AccountType.SAVINGS });
+      const account = makeMockAccount({
+        balance: 1000, status: BankAccountStatus.ACTIVE, accountType: AccountType.SAVINGS,
+      });
       mAccountRepo.findById.mockResolvedValue(account as any);
       mTxRepo.sumDebitsForAccountToday.mockResolvedValue(0);
 
@@ -188,10 +200,9 @@ describe('AccountService', () => {
         accountType: AccountType.SAVINGS,
       });
       mAccountRepo.findById.mockResolvedValue(account as any);
-      // Already withdrawn £2,400 today
+      // Already withdrawn £2,400 today; adding £200 pushes past the £2,500 limit
       mTxRepo.sumDebitsForAccountToday.mockResolvedValue(2_400);
 
-      // Attempting to withdraw £200 → total £2,600 > £2,500 limit
       await expect(service.withdraw('user-001', 'acc-001', 200)).rejects.toThrow('daily limit');
     });
 
@@ -207,21 +218,13 @@ describe('AccountService', () => {
 
   describe('transfer()', () => {
     const fromAccount = makeMockAccount({
-      id: 'acc-001',
-      userId: 'user-001',
-      accountNumber: '11111111',
-      balance: 2000,
-      currency: 'GBP',
-      status: BankAccountStatus.ACTIVE,
-      accountType: AccountType.CURRENT,
+      id: 'acc-001', userId: 'user-001', accountNumber: '11111111',
+      balance: 2000, currency: 'GBP',
+      status: BankAccountStatus.ACTIVE, accountType: AccountType.CURRENT,
     });
     const toAccount = makeMockAccount({
-      id: 'acc-002',
-      userId: 'user-002',
-      accountNumber: '22222222',
-      balance: 500,
-      currency: 'GBP',
-      status: BankAccountStatus.ACTIVE,
+      id: 'acc-002', userId: 'user-002', accountNumber: '22222222',
+      balance: 500, currency: 'GBP', status: BankAccountStatus.ACTIVE,
     });
 
     beforeEach(() => {
@@ -229,12 +232,8 @@ describe('AccountService', () => {
       mAccountRepo.findByAccountNumber.mockResolvedValue(toAccount as any);
       mTxRepo.sumDebitsForAccountToday.mockResolvedValue(0);
       mTransferRepo.findById.mockResolvedValue({
-        id: 'tr-001',
-        fromAccountId: 'acc-001',
-        toAccountId: 'acc-002',
-        amount: 500,
-        currency: 'GBP',
-        status: 'completed',
+        id: 'tr-001', fromAccountId: 'acc-001', toAccountId: 'acc-002',
+        amount: 500, currency: 'GBP', status: 'completed',
       } as any);
     });
 
@@ -278,7 +277,9 @@ describe('AccountService', () => {
     });
 
     it('throws when the source account is suspended', async () => {
-      mAccountRepo.findById.mockResolvedValue({ ...fromAccount, status: BankAccountStatus.SUSPENDED } as any);
+      mAccountRepo.findById.mockResolvedValue(
+        { ...fromAccount, status: BankAccountStatus.SUSPENDED } as any,
+      );
 
       await expect(
         service.transfer('user-001', 'acc-001', '22222222', 100),

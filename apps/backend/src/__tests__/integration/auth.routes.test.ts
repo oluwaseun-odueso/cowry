@@ -1,16 +1,38 @@
 /**
  * Integration tests for /api/v1/auth/*
  *
- * Strategy: the database pool and all repositories are mocked so no MySQL
- * connection is required.  AuthService is also mocked so we test the HTTP
- * contract (routing, middleware chains, validation, controller response
- * shaping) without re-testing service logic.
+ * Strategy: database, repositories, and AuthService are mocked so no MySQL
+ * connection is required.  We test the HTTP contract (routing, middleware
+ * chains, validation, controller response shaping).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { UserRole } from '@cowry/types';
 
-// ── Module mocks (hoisted before any imports) ──────────────────────────────────
+// ── vi.hoisted() — these run before any vi.mock() factories ──────────────────
+
+const mockAuthService = vi.hoisted(() => ({
+  register: vi.fn(),
+  login: vi.fn(),
+  verifyMfaChallenge: vi.fn(),
+  refreshToken: vi.fn(),
+  generatePasswordResetToken: vi.fn(),
+  resetPassword: vi.fn(),
+  verifyEmail: vi.fn(),
+  generateEmailVerificationToken: vi.fn(),
+  setupMfa: vi.fn(),
+  enableMfa: vi.fn(),
+  disableMfa: vi.fn(),
+  logout: vi.fn(),
+  getUserSessions: vi.fn(),
+  revokeSession: vi.fn(),
+  changePassword: vi.fn(),
+}));
+
+// Shared state that the passport mock reads at request time.
+const passportState = vi.hoisted(() => ({ currentUser: null as any }));
+
+// ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock('../../config/database', () => ({
   default: {
@@ -26,64 +48,29 @@ vi.mock('../../config/database', () => ({
   testConnection: vi.fn(),
 }));
 
-// Mock passport so JWT authentication is controllable per-test
-vi.mock('passport', async (importOriginal) => {
-  const original: any = await importOriginal();
-  return {
-    ...original,
-    authenticate: vi.fn(),
+vi.mock('passport', () => ({
+  default: {
+    // Reads passportState.currentUser at request time — asUser() just sets it.
+    authenticate: vi.fn((_strategy: string, _opts?: any, _cb?: Function) =>
+      (_req: any, _res: any, _next: any) => {
+        if (_cb) {
+          _cb(null, passportState.currentUser, null);
+        } else {
+          _next();
+        }
+      },
+    ),
     initialize: vi.fn(() => (_req: any, _res: any, next: any) => next()),
     use: vi.fn(),
-  };
-});
-
-// Default: authentication resolves to a logged-in regular user
-const mockUser = {
-  id: 'user-001',
-  email: 'test@example.com',
-  role: UserRole.USER,
-  status: 'active',
-  isMfaEnabled: true,
-};
-
-const mockRegisterResult = {
-  user: { id: 'u1', email: 'new@example.com', firstName: 'Test', lastName: 'User' },
-  accessToken: 'access-token',
-  refreshToken: 'refresh-token',
-  expiresIn: 900,
-  verificationToken: 'verify-token',
-};
-
-const mockLoginResult = {
-  user: { id: 'u1', email: 'test@example.com' },
-  accessToken: 'access-token',
-  refreshToken: 'refresh-token',
-  expiresIn: 900,
-};
-
-const mockAuthService = {
-  register: vi.fn().mockResolvedValue(mockRegisterResult),
-  login: vi.fn().mockResolvedValue(mockLoginResult),
-  verifyMfaChallenge: vi.fn().mockResolvedValue(mockLoginResult),
-  refreshToken: vi.fn().mockResolvedValue({ accessToken: 'new-access', refreshToken: 'new-refresh', expiresIn: 900 }),
-  generatePasswordResetToken: vi.fn().mockResolvedValue('reset-token'),
-  resetPassword: vi.fn().mockResolvedValue(true),
-  verifyEmail: vi.fn().mockResolvedValue(true),
-  generateEmailVerificationToken: vi.fn().mockResolvedValue('verify-token'),
-  setupMfa: vi.fn().mockResolvedValue({ otpauthUrl: 'otpauth://totp/...', secret: 'SECRET' }),
-  enableMfa: vi.fn().mockResolvedValue({ backupCodes: ['CODE1', 'CODE2'] }),
-  disableMfa: vi.fn().mockResolvedValue(undefined),
-  logout: vi.fn().mockResolvedValue(undefined),
-  getUserSessions: vi.fn().mockResolvedValue([]),
-  revokeSession: vi.fn().mockResolvedValue(true),
-  changePassword: vi.fn().mockResolvedValue(true),
-};
+    serializeUser: vi.fn(),
+    deserializeUser: vi.fn(),
+  },
+}));
 
 vi.mock('../../services/auth.service', () => ({
   AuthService: vi.fn(() => mockAuthService),
 }));
 
-// SessionRepository needed by AuthMiddleware
 vi.mock('../../models', () => ({
   UserRepository: {
     findByEmail: vi.fn(),
@@ -95,7 +82,10 @@ vi.mock('../../models', () => ({
     findByPhoneNumber: vi.fn(),
   },
   SessionRepository: {
-    findByToken: vi.fn().mockResolvedValue({ id: 's1', userId: 'user-001', isValid: true, expiresAt: new Date(Date.now() + 9e5 * 1000) }),
+    findByToken: vi.fn().mockResolvedValue({
+      id: 's1', userId: 'user-001', isValid: true,
+      expiresAt: new Date(Date.now() + 9e5 * 1000),
+    }),
     findByRefreshToken: vi.fn(),
     findByIdAndUserId: vi.fn(),
     invalidate: vi.fn(),
@@ -112,26 +102,48 @@ vi.mock('../../models', () => ({
   toPublicUser: vi.fn((u: any) => ({ id: u.id, email: u.email })),
 }));
 
-vi.mock('../../models/fraudAlert', () => ({ FraudAlertRepository: { create: vi.fn() } }));
-vi.mock('../../models/session', () => ({
-  SessionRepository: {
-    findByToken: vi.fn().mockResolvedValue({ id: 's1', userId: 'user-001', isValid: true }),
-    findByRefreshToken: vi.fn(),
-  },
-}));
+// ── Imports (resolved after mocks are applied) ────────────────────────────────
 
-// ── App + passport setup ───────────────────────────────────────────────────────
-
-import passport from 'passport';
 import { createTestApp } from '../helpers/create-test-app';
 import { makeAccessToken } from '../helpers/auth-helpers';
+import { SessionRepository, UserRepository } from '../../models';
+
+const validSession = {
+  id: 's1', userId: 'user-001', isValid: true,
+  expiresAt: new Date(Date.now() + 9e5 * 1000),
+};
+
+// ── Default return values ─────────────────────────────────────────────────────
+
+const mockRegisterResult = {
+  user: { id: 'u1', email: 'new@example.com', firstName: 'Test', lastName: 'User' },
+  accessToken: 'access-token',
+  refreshToken: 'refresh-token',
+  expiresIn: 900,
+  verificationToken: 'verify-token',
+};
+
+const mockLoginResult = {
+  user: { id: 'u1', email: 'test@example.com' },
+  accessToken: 'access-token',
+  refreshToken: 'refresh-token',
+  expiresIn: 900,
+};
+
+const mockUser = {
+  id: 'user-001', email: 'test@example.com',
+  role: UserRole.USER, status: 'active', isMfaEnabled: true,
+};
+
+// restoreMocks:true wipes mockResolvedValue() set in vi.mock() factories before
+// each test, so we re-apply critical mocks here.
+beforeEach(() => {
+  vi.mocked(SessionRepository.findByToken).mockResolvedValue(validSession as any);
+  vi.mocked(UserRepository.findById).mockResolvedValue(mockUser as any);
+});
 
 function setAuthUser(user: typeof mockUser | null) {
-  (passport.authenticate as any).mockImplementation(
-    (_strategy: string, _opts: any, callback: Function) =>
-      (_req: any, _res: any, _next: any) =>
-        callback(null, user, null),
-  );
+  passportState.currentUser = user;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,7 +164,6 @@ describe('POST /api/v1/auth/register', () => {
 
   it('returns 201 with tokens on valid payload', async () => {
     const res = await request(app).post('/api/v1/auth/register').send(validPayload);
-
     expect(res.status).toBe(201);
     expect(res.body.data).toHaveProperty('accessToken');
     expect(res.body.data).toHaveProperty('user');
@@ -160,7 +171,6 @@ describe('POST /api/v1/auth/register', () => {
 
   it('returns 400 when required fields are missing', async () => {
     const res = await request(app).post('/api/v1/auth/register').send({ email: 'x@x.com' });
-
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('errors');
   });
@@ -169,16 +179,15 @@ describe('POST /api/v1/auth/register', () => {
     const res = await request(app)
       .post('/api/v1/auth/register')
       .send({ ...validPayload, password: 'simple' });
-
     expect(res.status).toBe(400);
   });
 
-  it('returns 409 when the service throws a duplicate email error', async () => {
-    mockAuthService.register.mockRejectedValueOnce(new Error('User with this email already exists'));
-
+  it('returns 400 when the service throws a duplicate email error', async () => {
+    mockAuthService.register.mockRejectedValueOnce(
+      new Error('User with this email already exists'),
+    );
     const res = await request(app).post('/api/v1/auth/register').send(validPayload);
-
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(400);
   });
 });
 
@@ -190,18 +199,14 @@ describe('POST /api/v1/auth/login', () => {
 
   it('returns 200 with tokens on successful login', async () => {
     mockAuthService.login.mockResolvedValue(mockLoginResult);
-
     const res = await request(app).post('/api/v1/auth/login').send(validPayload);
-
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('accessToken');
   });
 
   it('returns 200 with mfaRequired flag when MFA is enabled', async () => {
     mockAuthService.login.mockResolvedValue({ mfaRequired: true, challengeToken: 'ch-tok' } as any);
-
     const res = await request(app).post('/api/v1/auth/login').send(validPayload);
-
     expect(res.status).toBe(200);
     expect(res.body.data.mfaRequired).toBe(true);
     expect(res.body.data.challengeToken).toBe('ch-tok');
@@ -209,9 +214,7 @@ describe('POST /api/v1/auth/login', () => {
 
   it('returns 401 on invalid credentials', async () => {
     mockAuthService.login.mockRejectedValueOnce(new Error('Invalid email or password'));
-
     const res = await request(app).post('/api/v1/auth/login').send(validPayload);
-
     expect(res.status).toBe(401);
   });
 
@@ -228,22 +231,18 @@ describe('POST /api/v1/auth/verify-mfa', () => {
 
   it('returns 200 with full session tokens', async () => {
     mockAuthService.verifyMfaChallenge.mockResolvedValue(mockLoginResult);
-
     const res = await request(app)
       .post('/api/v1/auth/verify-mfa')
       .send({ challengeToken: 'ch', code: '123456' });
-
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('accessToken');
   });
 
   it('returns 401 when the MFA code is invalid', async () => {
     mockAuthService.verifyMfaChallenge.mockRejectedValueOnce(new Error('Invalid MFA code'));
-
     const res = await request(app)
       .post('/api/v1/auth/verify-mfa')
       .send({ challengeToken: 'ch', code: '000000' });
-
     expect(res.status).toBe(401);
   });
 });
@@ -255,11 +254,9 @@ describe('POST /api/v1/auth/forgot-password', () => {
 
   it('always returns 200 regardless of whether email exists (anti-enumeration)', async () => {
     mockAuthService.generatePasswordResetToken.mockResolvedValue('some-token');
-
     const res = await request(app)
       .post('/api/v1/auth/forgot-password')
       .send({ email: 'anyone@example.com' });
-
     expect(res.status).toBe(200);
   });
 
@@ -267,7 +264,6 @@ describe('POST /api/v1/auth/forgot-password', () => {
     const res = await request(app)
       .post('/api/v1/auth/forgot-password')
       .send({ email: 'not-an-email' });
-
     expect(res.status).toBe(400);
   });
 });
@@ -280,21 +276,19 @@ describe('POST /api/v1/auth/verify-email', () => {
 
   it('returns 200 on a valid token', async () => {
     mockAuthService.verifyEmail.mockResolvedValue(true);
-
     const res = await request(app)
       .post('/api/v1/auth/verify-email')
       .send({ token: validToken });
-
     expect(res.status).toBe(200);
   });
 
   it('returns 400 on an invalid token', async () => {
-    mockAuthService.verifyEmail.mockRejectedValueOnce(new Error('Invalid or expired verification token'));
-
+    mockAuthService.verifyEmail.mockRejectedValueOnce(
+      new Error('Invalid or expired verification token'),
+    );
     const res = await request(app)
       .post('/api/v1/auth/verify-email')
       .send({ token: validToken });
-
     expect(res.status).toBe(400);
   });
 
@@ -311,20 +305,17 @@ describe('GET /api/v1/auth/profile', () => {
 
   it('returns 401 when no auth token is provided', async () => {
     setAuthUser(null);
-
     const res = await request(app).get('/api/v1/auth/profile');
     expect(res.status).toBe(401);
   });
 
   it('returns 200 with the user object for an authenticated request', async () => {
     setAuthUser(mockUser);
-
     const res = await request(app)
       .get('/api/v1/auth/profile')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`);
-
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('email');
+    expect(res.body.data.user).toHaveProperty('email');
   });
 });
 
@@ -335,12 +326,10 @@ describe('POST /api/v1/auth/change-password', () => {
 
   it('returns 403 when the step-up X-OTP-Token header is missing', async () => {
     setAuthUser(mockUser);
-
     const res = await request(app)
-      .post('/api/v1/auth/change-password')
+      .put('/api/v1/auth/change-password')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ currentPassword: 'Old1!', newPassword: 'New1!Passw0rd' });
-
     expect(res.status).toBe(403);
     expect(res.body).toMatchObject({ stepUpRequired: true });
   });

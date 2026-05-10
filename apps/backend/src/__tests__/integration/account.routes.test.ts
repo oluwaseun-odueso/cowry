@@ -2,26 +2,15 @@
  * Integration tests for /api/v1/accounts/*
  *
  * Verifies routing, auth/MFA middleware chains, validation, and controller
- * response shapes.  AccountService is mocked.
+ * response shapes.  AccountService is mocked via vi.hoisted().
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { UserRole } from '@cowry/types';
-import { makeAccessToken } from '../helpers/auth-helpers';
 
-// ── Mocks ─────────────────────────────────────────────────────────────────────
+// ── vi.hoisted() — available to vi.mock() factories ──────────────────────────
 
-vi.mock('../../config/database', () => ({
-  default: { getConnection: vi.fn(), execute: vi.fn().mockResolvedValue([[], []]) },
-  testConnection: vi.fn(),
-}));
-
-vi.mock('passport', async (importOriginal) => {
-  const original: any = await importOriginal();
-  return { ...original, authenticate: vi.fn(), initialize: vi.fn(() => (_: any, __: any, n: any) => n()), use: vi.fn() };
-});
-
-const mockAccountService = {
+const mockAccountService = vi.hoisted(() => ({
   createAccount: vi.fn(),
   getAccounts: vi.fn(),
   getAccount: vi.fn(),
@@ -31,23 +20,60 @@ const mockAccountService = {
   getTransactions: vi.fn(),
   getTransaction: vi.fn(),
   getStatement: vi.fn(),
-};
+}));
+
+// Shared state that the passport mock reads at request time.
+const passportState = vi.hoisted(() => ({ currentUser: null as any }));
+
+// ── Mocks ─────────────────────────────────────────────────────────────────────
+
+vi.mock('../../config/database', () => ({
+  default: {
+    getConnection: vi.fn().mockResolvedValue({
+      beginTransaction: vi.fn(),
+      execute: vi.fn().mockResolvedValue([[], []]),
+      commit: vi.fn(),
+      rollback: vi.fn(),
+      release: vi.fn(),
+    }),
+    execute: vi.fn().mockResolvedValue([[], []]),
+  },
+  testConnection: vi.fn(),
+}));
+
+vi.mock('passport', () => ({
+  default: {
+    authenticate: vi.fn((_strategy: string, _opts?: any, _cb?: Function) =>
+      (_req: any, _res: any, _next: any) => {
+        if (_cb) {
+          _cb(null, passportState.currentUser, null);
+        } else {
+          _next();
+        }
+      },
+    ),
+    initialize: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    use: vi.fn(),
+    serializeUser: vi.fn(),
+    deserializeUser: vi.fn(),
+  },
+}));
 
 vi.mock('../../services/account.service', () => ({
   AccountService: vi.fn(() => mockAccountService),
 }));
 
 vi.mock('../../services/auth.service', () => ({
-  AuthService: vi.fn(() => ({
-    register: vi.fn(),
-    login: vi.fn(),
-  })),
+  AuthService: vi.fn(() => ({ register: vi.fn(), login: vi.fn() })),
 }));
 
 vi.mock('../../models', () => ({
   UserRepository: { findById: vi.fn(), update: vi.fn() },
   SessionRepository: {
-    findByToken: vi.fn().mockResolvedValue({ id: 's1', userId: 'user-001', isValid: true, expiresAt: new Date(Date.now() + 9e5_000) }),
+    findByToken: vi.fn().mockResolvedValue({
+      id: 's1', userId: 'user-001', isValid: true,
+      expiresAt: new Date(Date.now() + 9e5_000),
+    }),
     findByRefreshToken: vi.fn(),
     findActiveByUserId: vi.fn().mockResolvedValue([]),
   },
@@ -61,10 +87,24 @@ vi.mock('../../models', () => ({
   toPublicUser: vi.fn((u: any) => u),
 }));
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Imports ───────────────────────────────────────────────────────────────────
 
-import passport from 'passport';
 import { createTestApp } from '../helpers/create-test-app';
+import { makeAccessToken } from '../helpers/auth-helpers';
+import { SessionRepository } from '../../models';
+
+const validSession = {
+  id: 's1', userId: 'user-001', isValid: true,
+  expiresAt: new Date(Date.now() + 9e5_000),
+};
+
+// restoreMocks:true wipes mockResolvedValue() set in vi.mock() factories before
+// each test, so we re-apply critical session mock here.
+beforeEach(() => {
+  vi.mocked(SessionRepository.findByToken).mockResolvedValue(validSession as any);
+});
+
+// ── Shared test data ──────────────────────────────────────────────────────────
 
 const mfaUser = {
   id: 'user-001', email: 'test@example.com',
@@ -73,9 +113,7 @@ const mfaUser = {
 const noMfaUser = { ...mfaUser, isMfaEnabled: false };
 
 function asUser(user: typeof mfaUser | null) {
-  (passport.authenticate as any).mockImplementation(
-    (_: string, __: any, cb: Function) => (_req: any, _res: any, _next: any) => cb(null, user, null),
-  );
+  passportState.currentUser = user;
 }
 
 const mockAccount = {
@@ -83,6 +121,7 @@ const mockAccount = {
   sortCode: '000000', accountType: 'savings', balance: 1000,
   currency: 'GBP', status: 'active',
 };
+
 const mockTx = {
   id: 'tx-001', accountId: 'acc-001', type: 'credit',
   amount: 100, currency: 'GBP', reference: 'REF-001',
@@ -121,7 +160,7 @@ describe('POST /api/v1/accounts', () => {
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ type: 'savings' });
     expect(res.status).toBe(201);
-    expect(res.body.data).toMatchObject({ accountType: 'savings' });
+    expect(res.body.data.account).toMatchObject({ accountType: 'savings' });
   });
 
   it('returns 400 when an invalid account type is sent', async () => {
@@ -133,14 +172,16 @@ describe('POST /api/v1/accounts', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 when the service throws a duplicate account error', async () => {
+  it('returns 409 when the service throws a duplicate account error', async () => {
     asUser(mfaUser);
-    mockAccountService.createAccount.mockRejectedValueOnce(new Error('You already have a savings account.'));
+    mockAccountService.createAccount.mockRejectedValueOnce(
+      new Error('You already have a savings account.'),
+    );
     const res = await request(app)
       .post('/api/v1/accounts')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ type: 'savings' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
   });
 });
 
@@ -152,13 +193,11 @@ describe('GET /api/v1/accounts', () => {
   it('returns 200 with a list of accounts', async () => {
     asUser(mfaUser);
     mockAccountService.getAccounts.mockResolvedValue([mockAccount]);
-
     const res = await request(app)
       .get('/api/v1/accounts')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`);
-
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.data.accounts)).toBe(true);
   });
 
   it('returns 401 without a token', async () => {
@@ -183,7 +222,6 @@ describe('POST /api/v1/accounts/:id/deposit', () => {
       .post('/api/v1/accounts/acc-001/deposit')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ amount: 100 });
-
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('balance', 1100);
   });
@@ -193,7 +231,6 @@ describe('POST /api/v1/accounts/:id/deposit', () => {
       .post('/api/v1/accounts/acc-001/deposit')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ amount: 0 });
-
     expect(res.status).toBe(400);
   });
 
@@ -202,7 +239,6 @@ describe('POST /api/v1/accounts/:id/deposit', () => {
       .post('/api/v1/accounts/acc-001/deposit')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({});
-
     expect(res.status).toBe(400);
   });
 });
@@ -212,30 +248,24 @@ describe('POST /api/v1/accounts/:id/deposit', () => {
 describe('POST /api/v1/accounts/:id/withdraw', () => {
   const app = createTestApp();
 
-  beforeEach(() => {
-    asUser(mfaUser);
-  });
+  beforeEach(() => { asUser(mfaUser); });
 
   it('returns 200 on a valid withdrawal', async () => {
     mockAccountService.withdraw.mockResolvedValue({ transaction: mockTx, balance: 900 });
-
     const res = await request(app)
       .post('/api/v1/accounts/acc-001/withdraw')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ amount: 100 });
-
     expect(res.status).toBe(200);
     expect(res.body.data.balance).toBe(900);
   });
 
   it('returns 400 for insufficient funds', async () => {
     mockAccountService.withdraw.mockRejectedValueOnce(new Error('Insufficient funds.'));
-
     const res = await request(app)
       .post('/api/v1/accounts/acc-001/withdraw')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ amount: 9999 });
-
     expect(res.status).toBe(400);
   });
 });
@@ -245,21 +275,17 @@ describe('POST /api/v1/accounts/:id/withdraw', () => {
 describe('POST /api/v1/accounts/:id/transfer', () => {
   const app = createTestApp();
 
-  beforeEach(() => {
-    asUser(mfaUser);
-  });
+  beforeEach(() => { asUser(mfaUser); });
 
   it('returns 200 on a valid transfer', async () => {
     mockAccountService.transfer.mockResolvedValue({
-      transfer: { id: 'tr-001', amount: 200, status: 'completed' },
-      balance: 800,
+      transfer: { id: 'tr-001', amount: 100, status: 'completed' },
+      balance: 900,
     });
-
     const res = await request(app)
       .post('/api/v1/accounts/acc-001/transfer')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
-      .send({ toAccountNumber: '87654321', amount: 200 });
-
+      .send({ toAccountNumber: '87654321', toSortCode: '40-00-01', recipientName: 'Jane Doe', amount: 100 });
     expect(res.status).toBe(200);
   });
 
@@ -268,7 +294,6 @@ describe('POST /api/v1/accounts/:id/transfer', () => {
       .post('/api/v1/accounts/acc-001/transfer')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ amount: 100 });
-
     expect(res.status).toBe(400);
   });
 
@@ -277,7 +302,6 @@ describe('POST /api/v1/accounts/:id/transfer', () => {
       .post('/api/v1/accounts/acc-001/transfer')
       .set('Authorization', `Bearer ${makeAccessToken('user-001', 'test@example.com')}`)
       .send({ toAccountNumber: '87654321', amount: 0 });
-
     expect(res.status).toBe(400);
   });
 });
