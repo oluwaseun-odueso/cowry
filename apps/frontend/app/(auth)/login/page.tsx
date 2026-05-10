@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import { CowryLogo } from "@/components/cowry-logo";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [errorType, setErrorType] = useState<"generic" | "locked">("generic");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
@@ -31,7 +32,9 @@ export default function LoginPage() {
         router.push(res.data.user.isMfaEnabled ? "/dashboard" : "/setup-mfa");
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      const msg = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      setErrorType(msg.toLowerCase().includes("locked") ? "locked" : "generic");
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -87,7 +90,17 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && errorType === "locked" ? (
+          <div className={styles.lockedBanner}>
+            <Lock size={16} />
+            <div>
+              <strong>Account temporarily locked</strong>
+              <p>{error}</p>
+            </div>
+          </div>
+        ) : error ? (
+          <p className={styles.error}>{error}</p>
+        ) : null}
 
         <div className={styles.actions}>
           <button type="submit" disabled={loading} className={styles.submitBtn}>
