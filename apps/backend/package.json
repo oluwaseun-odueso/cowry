@@ -6,10 +6,18 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "start": "nodemon dist/app.js"
+    "start": "nodemon dist/app.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/supertest": "^6.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",

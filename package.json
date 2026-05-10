@@ -5,9 +5,14 @@
     "dev:backend": "pnpm --filter @cowry/backend dev",
     "dev:frontend": "pnpm --filter @cowry/frontend dev",
     "build:backend": "pnpm --filter @cowry/backend build",
-    "build:frontend": "pnpm --filter @cowry/frontend build"
+    "build:frontend": "pnpm --filter @cowry/frontend build",
+    "test": "pnpm --filter @cowry/backend test:run && pnpm --filter @cowry/frontend test:run",
+    "test:backend": "pnpm --filter @cowry/backend test",
+    "test:frontend": "pnpm --filter @cowry/frontend test",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "typescript": "^5.9.3"
   },
   "pnpm": {
