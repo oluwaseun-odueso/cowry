@@ -601,6 +601,232 @@ The schema is defined in `apps/backend/src/config/schema.sql` and is applied aut
 | `paymentRequest` | Peer payment requests |
 | `merchantBlock` | Per-card merchant blocks |
 
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS {
+        char(36) id PK
+        varchar(255) email UK
+        varchar(255) password
+        varchar(100) first_name
+        varchar(100) last_name
+        enum role "user|admin"
+        enum status "active|suspended|locked"
+        varchar(255) google_id UK
+        text profile_picture
+        datetime last_login
+        varchar(45) last_login_ip
+        int login_attempts
+        datetime lock_until
+        varchar(20) phone_number UK
+        varchar(32) tag UK
+        varchar(255) passcode_hash
+        varchar(64) avatar
+        tinyint(1) is_mfa_enabled
+        varchar(255) mfa_secret
+        tinyint(1) email_verified
+        text refresh_token
+        datetime created_at
+        datetime updated_at
+    }
+
+    SESSIONS {
+        char(36) id PK
+        char(36) user_id FK
+        text token
+        text refresh_token
+        varchar(45) ip_address
+        text user_agent
+        json location
+        json device_info
+        datetime expires_at
+        tinyint(1) is_valid
+        datetime created_at
+        datetime updated_at
+    }
+
+    ACCOUNTS {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(8) account_number UK
+        varchar(6) sort_code
+        enum account_type "savings|current"
+        varchar(3) currency
+        decimal(15_2) balance
+        enum status "active|suspended"
+        datetime created_at
+    }
+
+    CARDS {
+        char(36) id PK
+        char(36) account_id FK
+        enum card_type "debit|prepaid|disposable"
+        text card_number
+        varchar(4) last_four
+        tinyint expiry_month
+        smallint expiry_year
+        text cvv
+        tinyint(1) is_frozen
+        enum status "active|frozen|blocked|cancelled|used"
+        tinyint(1) is_disposable
+        datetime expires_at
+        datetime created_at
+    }
+
+    TRANSACTIONS {
+        char(36) id PK
+        char(36) account_id FK
+        enum type "credit|debit"
+        decimal(15_2) amount
+        varchar(3) currency
+        varchar(50) reference UK
+        varchar(255) description
+        enum status "pending|completed|failed"
+        json metadata
+        datetime created_at
+    }
+
+    TRANSFERS {
+        char(36) id PK
+        char(36) from_account_id FK
+        char(36) to_account_id FK
+        decimal(15_2) amount
+        varchar(3) currency
+        varchar(50) reference UK
+        enum status "pending|completed|failed"
+        datetime created_at
+    }
+
+    CONTACTS {
+        char(36) id PK
+        char(36) owner_user_id FK
+        char(36) contact_user_id FK
+        varchar(100) nickname
+        varchar(8) account_number
+        varchar(6) sort_code
+        varchar(32) tag
+        datetime created_at
+    }
+
+    PAYMENT_REQUESTS {
+        char(36) id PK
+        varchar(12) reference
+        char(36) requester_user_id FK
+        varchar(8) payer_account_number
+        char(36) payer_user_id
+        decimal(15_2) amount
+        varchar(255) description
+        enum status "pending|paid|declined|expired"
+        datetime expires_at
+        datetime created_at
+    }
+
+    SPLIT_REQUESTS {
+        char(36) id PK
+        varchar(12) reference
+        char(36) initiator_user_id FK
+        decimal(15_2) total_amount
+        varchar(255) description
+        enum status "pending|completed|cancelled"
+        datetime created_at
+    }
+
+    SPLIT_PARTICIPANTS {
+        char(36) id PK
+        char(36) split_request_id FK
+        char(36) user_id
+        varchar(8) account_number
+        decimal(15_2) amount
+        enum status "pending|paid|declined"
+        datetime paid_at
+    }
+
+    EMAIL_VERIFICATIONS {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(255) token_hash
+        datetime expires_at
+        tinyint(1) used
+        datetime created_at
+    }
+
+    PASSWORD_RESETS {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(255) token_hash
+        datetime expires_at
+        tinyint(1) used
+        datetime created_at
+    }
+
+    MFA_BACKUP_CODES {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(255) code_hash
+        tinyint(1) used
+        datetime used_at
+        datetime created_at
+    }
+
+    OTP_CODES {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(64) action
+        varchar(255) code_hash
+        datetime expires_at
+        tinyint(1) used
+        datetime created_at
+    }
+
+    FRAUD_ALERTS {
+        char(36) id PK
+        char(36) user_id FK
+        char(36) session_id FK
+        varchar(100) rule_name
+        enum risk_level "low|medium|high"
+        text description
+        varchar(45) ip_address
+        json location
+        json metadata
+        varchar(50) action
+        tinyint(1) is_resolved
+        datetime resolved_at
+        varchar(100) resolved_by
+        datetime created_at
+        datetime updated_at
+    }
+
+    MERCHANT_BLOCKS {
+        char(36) id PK
+        char(36) user_id FK
+        varchar(255) merchant_name
+        datetime created_at
+    }
+
+    USERS ||--o{ SESSIONS : "has"
+    USERS ||--o{ ACCOUNTS : "owns"
+    USERS ||--o{ CONTACTS : "owns (owner)"
+    USERS ||--o{ CONTACTS : "referenced by (contact)"
+    USERS ||--o{ PAYMENT_REQUESTS : "requests"
+    USERS ||--o{ SPLIT_REQUESTS : "initiates"
+    USERS ||--o{ EMAIL_VERIFICATIONS : "has"
+    USERS ||--o{ PASSWORD_RESETS : "has"
+    USERS ||--o{ MFA_BACKUP_CODES : "has"
+    USERS ||--o{ OTP_CODES : "has"
+    USERS ||--o{ FRAUD_ALERTS : "triggers"
+    USERS ||--o{ MERCHANT_BLOCKS : "blocks"
+
+    ACCOUNTS ||--o{ CARDS : "has"
+    ACCOUNTS ||--o{ TRANSACTIONS : "records"
+    ACCOUNTS ||--o{ TRANSFERS : "sends (from)"
+    ACCOUNTS ||--o{ TRANSFERS : "receives (to)"
+
+    SESSIONS ||--o{ FRAUD_ALERTS : "associated with"
+
+    SPLIT_REQUESTS ||--o{ SPLIT_PARTICIPANTS : "has"
+```
+
 ---
 
 ## Frontend Pages
