@@ -112,12 +112,6 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Disable MFA
-  const [disableCode, setDisableCode] = useState("");
-  const [disableLoading, setDisableLoading] = useState(false);
-  const [disableError, setDisableError] = useState("");
-  const [showDisable, setShowDisable] = useState(false);
-
   async function startSetup() {
     setLoading(true); setError("");
     try {
@@ -144,21 +138,6 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
       setError(err instanceof Error ? err.message : "Invalid code. Try again.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleDisable(e: React.FormEvent) {
-    e.preventDefault();
-    setDisableLoading(true); setDisableError("");
-    try {
-      await api.auth.disableMfa(disableCode);
-      setEnabled(false);
-      setShowDisable(false);
-      setDisableCode("");
-    } catch (err: unknown) {
-      setDisableError(err instanceof Error ? err.message : "Invalid code.");
-    } finally {
-      setDisableLoading(false);
     }
   }
 
@@ -255,37 +234,6 @@ function MfaSection({ isMfaEnabled }: { isMfaEnabled: boolean }) {
           <div className={styles.mfaStatusOn}>
             <Shield size={16} /> MFA is enabled
           </div>
-          {!showDisable ? (
-            <button onClick={() => setShowDisable(true)} className={styles.dangerGhostBtn}>
-              Disable MFA
-            </button>
-          ) : (
-            <form onSubmit={handleDisable} className={styles.form}>
-              <p className={styles.disableWarning}>
-                Enter your current TOTP code or a backup code to disable MFA.
-              </p>
-              <div className={styles.field}>
-                <label className={styles.label}>Code</label>
-                <input
-                  type="text"
-                  value={disableCode}
-                  onChange={(e) => setDisableCode(e.target.value)}
-                  className={styles.input}
-                  placeholder="6-digit TOTP or backup code"
-                  required
-                />
-              </div>
-              {disableError && <p className={styles.errorMsg}>{disableError}</p>}
-              <div className={styles.rowBtns}>
-                <button type="button" onClick={() => setShowDisable(false)} className={styles.ghostBtn}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={disableLoading} className={styles.dangerBtn}>
-                  {disableLoading ? "Disabling…" : "Disable MFA"}
-                </button>
-              </div>
-            </form>
-          )}
         </>
       ) : (
         <>
