@@ -116,7 +116,6 @@ const RULE_LABELS: Record<string, string> = {
 
 function AuditTab() {
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
-  const [userMap, setUserMap] = useState<Record<string, PublicUser>>({});
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [page, setPage] = useState(1);
   const [riskLevel, setRiskLevel] = useState("");
@@ -124,16 +123,6 @@ function AuditTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resolving, setResolving] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.admin.users()
-      .then(({ data }) => {
-        const map: Record<string, PublicUser> = {};
-        data.users.forEach((u) => { map[u.id] = u; });
-        setUserMap(map);
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -203,11 +192,7 @@ function AuditTab() {
             <tbody>
               {alerts.map((alert) => (
                 <tr key={alert.id}>
-                  <td className={styles.tdUser}>
-                    {alert.userId && userMap[alert.userId]
-                      ? `${userMap[alert.userId].firstName} ${userMap[alert.userId].lastName}`
-                      : "—"}
-                  </td>
+                  <td className={styles.tdUser}>{alert.userId ?? "—"}</td>
                   <td className={styles.tdRule}>{RULE_LABELS[alert.ruleName] ?? alert.ruleName}</td>
                   <td>
                     <span className={`${styles.badge} ${
