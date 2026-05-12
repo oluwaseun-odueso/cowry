@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { Plus, X, CheckCircle, XCircle, Clock } from "lucide-react";
 import { api, PaymentRequest } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import styles from "./page.module.css";
 
 export default function RequestPage() {
+  const { user } = useAuth();
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,7 +60,8 @@ export default function RequestPage() {
 
   if (loading) return <div className={styles.loadingShim} />;
 
-  const incoming = requests.filter(r => r.status === "pending" && r.payerAccountNumber);
+  const incoming = requests.filter(r => r.status === "pending" && r.payerUserId === user?.id);
+  const outgoing = requests.filter(r => r.status === "pending" && r.requesterUserId === user?.id);
 
   return (
     <div className={styles.page}>
@@ -135,6 +138,31 @@ export default function RequestPage() {
           >
             <Plus size={15} /> {creating ? "Sending…" : "Send request"}
           </button>
+        </section>
+      )}
+
+      {outgoing.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Requests you&apos;re owed</h2>
+          <div className={styles.requestList}>
+            {outgoing.map(r => (
+              <div key={r.id} className={styles.requestCard}>
+                <div className={styles.requestCardHeader}>
+                  <div className={styles.requestInfo}>
+                    <span className={styles.requestAmount}>£{r.amount.toFixed(2)}</span>
+                    {r.description && <span className={styles.requestDescription}>{r.description}</span>}
+                    <span className={styles.requestMeta}>
+                      {r.reference} · Sent {new Date(r.createdAt).toLocaleDateString("en-GB")}
+                      {r.expiresAt && ` · expires ${new Date(r.expiresAt).toLocaleDateString("en-GB")}`}
+                    </span>
+                  </div>
+                  <span className={`${styles.statusBadge} ${styles.pending}`}>
+                    <Clock size={11} /> Pending
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
