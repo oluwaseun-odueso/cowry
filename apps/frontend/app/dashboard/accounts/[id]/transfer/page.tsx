@@ -4,6 +4,8 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react";
 import { api, Account } from "@/lib/api";
+import { useStepUp } from "@/lib/use-step-up";
+import { StepUpModal } from "@/components/step-up-modal";
 import styles from "./page.module.css";
 
 function fmt(amount: number, currency: string) {
@@ -32,6 +34,8 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
   const [stage, setStage] = useState<Stage>("form");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ reference: string; newBalance: number } | null>(null);
+
+  const { stepUp, requestStepUp, dismissStepUp, submitStepUp, verifyingOtp, stepUpError, requestingOtp } = useStepUp();
 
   useEffect(() => {
     api.accounts.get(id)
@@ -62,18 +66,25 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
     setLoading(true);
     setError("");
     try {
+      const parsedAmount = parseFloat(amount);
+      let otpToken: string | undefined;
+      if (parsedAmount > 500) {
+        otpToken = await requestStepUp("large_transfer");
+      }
       const { data } = await api.accounts.transfer(id, {
         toSortCode: toSortCode.replace(/-/g, "").trim(),
         toAccountNumber: toAccountNumber.trim(),
         recipientName: recipientName.trim(),
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         ...(description.trim() ? { description: description.trim() } : {}),
-      });
+      }, otpToken);
       setSuccess({ reference: data.transfer.reference, newBalance: data.balance });
       setStage("success");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Transfer failed. Please try again.");
-      setStage("form");
+      if ((err as Error).message !== "Step-up cancelled by user.") {
+        setError(err instanceof Error ? err.message : "Transfer failed. Please try again.");
+        setStage("form");
+      }
     } finally {
       setLoading(false);
     }
@@ -171,11 +182,21 @@ export default function TransferPage({ params }: { params: Promise<{ id: string 
             <button onClick={() => setStage("form")} className={styles.cancelBtn} disabled={loading}>
               Cancel
             </button>
-            <button onClick={handleConfirm} className={styles.confirmBtn} disabled={loading}>
-              {loading ? "Sending…" : "Confirm transfer"}
+            <button onClick={handleConfirm} className={styles.confirmBtn} disabled={loading || requestingOtp}>
+              {loading || requestingOtp ? "Sending…" : "Confirm transfer"}
             </button>
           </div>
         </div>
+        <StepUpModal
+          isOpen={stepUp.isOpen}
+          action={stepUp.action}
+          error={stepUpError}
+          verifying={verifyingOtp}
+          onSubmit={(code) => void submitStepUp(code)}
+          onDismiss={dismissStepUp}
+          onResend={() => void requestStepUp(stepUp.action)}
+          resending={requestingOtp}
+        />
       </div>
     );
   }

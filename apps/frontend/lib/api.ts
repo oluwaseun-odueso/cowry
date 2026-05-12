@@ -465,6 +465,7 @@ export const api = {
     transfer: (
       id: string,
       body: { toSortCode: string; toAccountNumber: string; recipientName: string; amount: number; description?: string },
+      otpToken?: string,
     ) =>
       request<{
         status: string;
@@ -472,6 +473,7 @@ export const api = {
       }>(`/accounts/${id}/transfer`, {
         method: "POST",
         body: JSON.stringify(body),
+        ...(otpToken ? { headers: { "X-OTP-Token": otpToken } } : {}),
       }),
 
     transactions: (
