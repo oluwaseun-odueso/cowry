@@ -234,13 +234,59 @@ router.post('/payment-requests', async (req: Request, res: Response) => {
 });
 
 router.post('/payment-requests/:id/pay', async (req: Request, res: Response) => {
+  const conn = await pool.getConnection();
   try {
     const pr = await PaymentRequestRepository.findById(String(req.params.id));
     if (!pr) return res.status(404).json({ status: 'error', message: 'Request not found.' });
     if (pr.status !== 'pending') return res.status(400).json({ status: 'error', message: 'Request is no longer pending.' });
-    await PaymentRequestRepository.updateStatus(pr.id, 'paid');
-    return res.json({ status: 'success', message: 'Payment request fulfilled.' });
+    if (pr.payerUserId !== req.user!.id) {
+      return res.status(403).json({ status: 'error', message: 'You are not the intended payer for this request.' });
+    }
+
+    const payerAccounts = await AccountRepository.findByUserId(req.user!.id);
+    const payerAccount = payerAccounts.find(a => a.status === 'active');
+    if (!payerAccount) return res.status(400).json({ status: 'error', message: 'No active account found.' });
+    if (payerAccount.balance < pr.amount) {
+      return res.status(400).json({ status: 'error', message: 'Insufficient funds.' });
+    }
+
+    const requesterAccounts = await AccountRepository.findByUserId(pr.requesterUserId);
+    const requesterAccount = requesterAccounts.find(a => a.status === 'active');
+    if (!requesterAccount) return res.status(400).json({ status: 'error', message: 'Requester has no active account.' });
+
+    const desc = pr.description ? `Payment request: ${pr.description}` : `Payment request ${pr.reference}`;
+    const debitRef = `${pr.reference}-${uuidv4().slice(0, 6).toUpperCase()}`;
+    const creditRef = `${pr.reference}-${uuidv4().slice(0, 6).toUpperCase()}`;
+
+    await conn.beginTransaction();
+
+    await conn.execute('UPDATE accounts SET balance = ? WHERE id = ?', [payerAccount.balance - pr.amount, payerAccount.id]);
+    await conn.execute('UPDATE accounts SET balance = ? WHERE id = ?', [requesterAccount.balance + pr.amount, requesterAccount.id]);
+
+    await conn.execute(
+      `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+       VALUES (?, ?, 'debit', ?, ?, ?, ?, 'completed')`,
+      [uuidv4(), payerAccount.id, pr.amount, payerAccount.currency, debitRef, desc]
+    );
+    await conn.execute(
+      `INSERT INTO transactions (id, account_id, type, amount, currency, reference, description, status)
+       VALUES (?, ?, 'credit', ?, ?, ?, ?, 'completed')`,
+      [uuidv4(), requesterAccount.id, pr.amount, requesterAccount.currency, creditRef, desc]
+    );
+
+    await conn.execute(
+      'UPDATE payment_requests SET status = ? WHERE id = ?',
+      ['paid', pr.id]
+    );
+
+    await conn.commit();
+    conn.release();
+
+    const updated = await PaymentRequestRepository.findById(pr.id);
+    return res.json({ status: 'success', data: { request: updated } });
   } catch (err: any) {
+    await conn.rollback();
+    conn.release();
     return res.status(400).json({ status: 'error', message: err.message });
   }
 });
