@@ -70,7 +70,8 @@ const limiter = rateLimit({
     max: 100,
     message: 'Too many requests from this IP, please try again later',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'development',
 })
 app.use('/api', limiter)
 app.use(passport.initialize())

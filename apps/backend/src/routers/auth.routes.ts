@@ -14,6 +14,7 @@ const loginLimiter = rateLimit({
   message: { status: 'error', message: 'Too many login attempts. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'development',
 });
 
 // Broader limiter for registration and password-recovery endpoints
@@ -23,6 +24,7 @@ const authLimiter = rateLimit({
   message: { status: 'error', message: 'Too many requests. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'development',
 });
 
 const router = Router();
@@ -113,10 +115,7 @@ router.post(
  * @access Public
  */
 router.get('/google', (req, res, next) => {
-  const { phoneNumber } = req.query;
-  if (!phoneNumber || typeof phoneNumber !== 'string') {
-    return res.status(400).json({ status: 'error', message: 'Phone number is required' });
-  }
+  const phoneNumber = typeof req.query.phoneNumber === 'string' ? req.query.phoneNumber : '';
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false,
