@@ -353,7 +353,7 @@ export default function CardsPage() {
           </button>
         </div>
         <p className={styles.sectionDesc}>
-          A single-use card is automatically cancelled after 5 minutes — ideal for one-off online purchases.
+          A single-use card is automatically cancelled after 5 minutes, ideal for one-off online purchases.
         </p>
         {disposableCards.length === 0 ? (
           <p className={styles.emptyHint}>No single-use cards yet. Generate one above to get a card number for a one-off purchase.</p>

@@ -100,7 +100,7 @@ export default function SetupMfaPage() {
           className={styles.submitBtn}
           onClick={() => router.push("/setup-avatar")}
         >
-          I&apos;ve saved my codes — continue
+          I&apos;ve saved my codes, continue
         </button>
       </div>
     );

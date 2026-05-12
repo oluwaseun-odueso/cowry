@@ -104,18 +104,13 @@ function HeroSection() {
 
       {/* Centre content */}
       <div className={styles.heroCenter}>
-        <p className={styles.heroBadge}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          Bank-grade security · 256-bit encryption
-        </p>
+
         <h1 className={styles.heroTitle}>
           Send, Save &amp;<br />Receive with<br />
           <span className={styles.heroAccent}>Cowry</span>
         </h1>
         <p className={styles.heroSub}>
-          Your money, protected and growing. Open an account in 2 minutes —
+          Your money, protected and growing. Open an account in 2 minutes,
           no branches, no paperwork, zero fees.
         </p>
         <div className={styles.heroCtas}>

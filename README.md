@@ -365,7 +365,7 @@ Cowry uses Mailjet to send verification emails and password reset links.
 3. Copy your **API Key** and **Secret Key**
 4. Verify a sender email address under **Senders & Domains**
 
-#### Google OAuth (optional — for "Sign in with Google")
+#### Google OAuth (optional for "Sign in with Google")
 
 If you want Google login to work:
 
