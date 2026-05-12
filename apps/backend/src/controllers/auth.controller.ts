@@ -131,10 +131,6 @@ export class AuthController {
         phoneNumber = decoded.phoneNumber || '';
       } catch {}
 
-      if (!phoneNumber) {
-        return res.redirect(`${frontendUrl}/login?error=phone_required`);
-      }
-
       const location = this.getLocationFromIp(ipAddress);
       const result = await this.authService.googleLogin(profile, ipAddress, userAgent, phoneNumber, location);
 

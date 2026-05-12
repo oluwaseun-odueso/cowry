@@ -302,6 +302,66 @@
   .footerLink:hover { color: #23164D; }
 }
 
+/* ── Google phone prompt ── */
+.googlePrompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.googlePromptLabel {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.googlePromptActions {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  height: 3.25rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cancelBtn:hover { background: rgba(255, 255, 255, 0.12); }
+
+.googleConfirmBtn {
+  flex: 1;
+  height: 3.25rem;
+  border-radius: 9999px;
+  background: #252B65;
+  border: none;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.googleConfirmBtn:hover:not(:disabled) { background: #23164D; }
+.googleConfirmBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (min-width: 768px) {
+  .googlePromptLabel { color: #6B7280; }
+  .cancelBtn {
+    background: #ffffff;
+    border: 1.5px solid #E5E7EB;
+    color: #6B7280;
+  }
+  .cancelBtn:hover { background: #F9FAFB; }
+}
+
 .successWrap {
   display: flex;
   flex-direction: column;
